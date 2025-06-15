@@ -1,0 +1,35 @@
+/* src/styles/TicketForm.css */
+
+form {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-family: 'Arial', sans-serif;
+}
+
+input, select, button {
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+button {
+  background-color: #222;
+  color: white;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #444;
+}
+
+p {
+  text-align: center;
+  font-size: 0.95rem;
+}
