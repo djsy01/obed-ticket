@@ -29,5 +29,5 @@
 ---
 
 ## 🔧 각 폴더별 README
-[client(프론트엔드)](./client/README.md) : Vite, React, TypeScript, CSS
-[server(백엔드)](./server/README.md) : NodeJS, Express, TypeScript, MySQL, Firebase Admin SDK
+- [client(프론트엔드)](./client/README.md) : Vite, React, TypeScript, CSS
+- [server(백엔드)](./server/README.md) : NodeJS, Express, TypeScript, MySQL, Firebase Admin SDK
