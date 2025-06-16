@@ -42,13 +42,13 @@ export const requestConfirm = async (ticketId: number) => {
 };
 
 // ✅ 환불 요청 API (status: 'refund_requested')
-export const requestRefund = async (id: number, account: string) => {
+export const requestRefund = async (id: number, refundAccount: string) => {
   const res = await fetch(`/api/tickets/${id}/request-refund`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ account }),
+    body: JSON.stringify({ refundAccount }), // ✅ key 이름을 백엔드 기준에 맞춤
   });
 
   if (!res.ok) {
