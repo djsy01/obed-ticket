@@ -7,6 +7,11 @@ import {
 
 const router = Router();
 
+// ✅ 테스트용 기본 GET (브라우저 접근 확인용)
+router.get("/", (req, res) => {
+  res.send("🎫 OBED Ticket API is working");
+});
+
 // 신청
 router.post("/", applyTicket);
 
