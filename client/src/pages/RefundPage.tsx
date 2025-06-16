@@ -12,7 +12,8 @@ const formatQuantity = (qty: number) => `${qty}매`;
 export default function RefundPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [ticket, setTicket] = useState<any>(null); // 타입 안전하게 하려면 Ticket 타입 선언 추천
+
+  const [ticket, setTicket] = useState<any>(null);
   const [accountInput, setAccountInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,12 +24,9 @@ export default function RefundPage() {
       return;
     }
 
-    // 실제 값 확인
-    console.log("전달된 티켓 정보:", location.state);
-    console.log("📦 넘어온 ticket 정보:", location.state);
-    setTicket(location.state);
-    console.log("📦 넘어온 ticket 정보:", JSON.stringify(ticket, null, 2)); // 전체 구조 보기
-    console.log("🎯 ticket.id:", ticket.id); // 또는 ticket.ticketId
+    const incomingTicket = location.state;
+    console.log("📦 전달된 ticket 정보:", JSON.stringify(incomingTicket, null, 2));
+    setTicket(incomingTicket);
   }, [location.state, navigate]);
 
   const handleRefundSubmit = async () => {
@@ -44,7 +42,7 @@ export default function RefundPage() {
 
     setIsSubmitting(true);
     try {
-      await requestRefund(ticket.ticketId, accountInput);
+      await requestRefund(ticket.id, accountInput); // ✅ ticket.id로 수정
       alert("환불 요청이 완료되었습니다.");
       navigate("/");
     } catch (err) {
