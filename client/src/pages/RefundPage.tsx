@@ -35,14 +35,14 @@ export default function RefundPage() {
       return;
     }
 
-    if (!ticket || !ticket.id) {
+    if (!ticket || !ticket.ticketId) {
       alert("티켓 정보가 올바르지 않습니다.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await requestRefund(ticket.id, accountInput); // ✅ ticket.id로 수정
+      await requestRefund(ticket.ticketId, accountInput); // ✅ ticket.ticketId 사용
       alert("환불 요청이 완료되었습니다.");
       navigate("/");
     } catch (err) {
@@ -60,7 +60,7 @@ export default function RefundPage() {
       <h2>💸 환불 요청</h2>
       <p><strong>예매자:</strong> {ticket.name}</p>
       <p><strong>전화번호:</strong> {ticket.phone}</p>
-      <p><strong>티켓 종류:</strong> {getTicketTypeLabel(ticket.ticket_type)}</p>
+      <p><strong>티켓 종류:</strong> {getTicketTypeLabel(ticket.ticketType)}</p>
       <p><strong>수량:</strong> {formatQuantity(ticket.quantity)}</p>
 
       <label>📥 환불 계좌</label>
