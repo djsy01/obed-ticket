@@ -3,7 +3,8 @@ import {
   applyTicket,
   getTicketByNameAndPhone,
   requestConfirmTicket,
-  requestRefundTicket
+  requestRefundTicket,
+  requestDeleteTicket
 } from "../controllers/ticketController";
 
 const router = Router();
@@ -24,5 +25,8 @@ router.patch("/:id/request-confirm", requestConfirmTicket);
 
 // ✅ 사용자: 송금 완료 요청
 router.patch("/:id/request-payment", requestRefundTicket);
+
+// ✅ 사용자: 예약 취소
+router.patch("/:id/request-delete", requestDeleteTicket);
 
 export default router;
