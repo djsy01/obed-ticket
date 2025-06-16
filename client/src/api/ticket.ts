@@ -42,11 +42,20 @@ export const requestConfirm = async (ticketId: number) => {
 };
 
 // ✅ 환불 요청 API (status: 'refund_requested')
-export const requestRefund = async (ticketId: number, account: string) => {
-  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-refund`, {
-    refundAccount: account,
+export const requestRefund = async (id: number, account: string) => {
+  const res = await fetch(`/api/tickets/${id}/request-refund`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ account }),
   });
-  return res.data;
+
+  if (!res.ok) {
+    throw new Error("환불 요청 실패");
+  }
+
+  return res.json();
 };
 
 // ✅ 예약 취소 API (status: 'delete')
