@@ -34,6 +34,7 @@ export const applyTicket = async (req: Request, res: Response) => {
       ticketCode,
     });
   } catch (err) {
+    console.error("❌ applyTicket 오류:", err);
     res.status(500).json({ message: "DB 오류" });
   }
 };
@@ -61,6 +62,7 @@ export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
 
     res.status(200).json(rows[0]);
   } catch (err) {
+    console.error("❌ getTicketByNameAndPhone 오류:", err);
     res.status(500).json({ message: "DB 오류" });
   }
 };
@@ -81,6 +83,7 @@ export const confirmTicket = async (req: Request, res: Response) => {
 
     res.status(200).json({ message: "입금 확인 완료" });
   } catch (err) {
+    console.error("❌ confirmTicket 오류:", err);
     res.status(500).json({ message: "DB 오류" });
   }
 };
