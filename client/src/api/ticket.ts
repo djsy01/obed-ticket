@@ -6,8 +6,12 @@ const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 interface ApplyTicketParams {
   name: string;
   email: string;
+  phone: string;
   ticketType: "student" | "adult";
+  quantity?: number;
+  memo?: string;
 }
+
 
 interface ApplyTicketResponse {
   ticketId: number;
