@@ -1,13 +1,10 @@
-#root {
-  margin: 0 auto;
-  padding: 1rem;
-  text-align: center;
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.logo {
-  padding: 1rem;
-}
-
-.card {
-  padding: 1rem;
+* {
+  box-sizing: inherit;
 }
