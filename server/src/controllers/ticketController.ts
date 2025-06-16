@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 // 티켓 신청
 export const applyTicket = async (req: Request, res: Response) => {
+  console.log("📥 티켓 신청 요청:", req.body);
   const {
     name,
     email,
