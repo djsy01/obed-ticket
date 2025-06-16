@@ -47,6 +47,7 @@ export default function RefundPage() {
       navigate("/");
     } catch (err) {
       console.error("환불 요청 실패:", err);
+      console.error("❌ 요청 자체 실패:", err);
       alert("요청 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
