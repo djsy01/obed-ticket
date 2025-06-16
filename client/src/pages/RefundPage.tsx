@@ -25,6 +25,7 @@ export default function RefundPage() {
 
     // 실제 값 확인
     console.log("전달된 티켓 정보:", location.state);
+    console.log("📦 넘어온 ticket 정보:", location.state);
     setTicket(location.state);
   }, [location.state, navigate]);
 
