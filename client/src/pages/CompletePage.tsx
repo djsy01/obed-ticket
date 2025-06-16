@@ -80,7 +80,7 @@ export default function CompletePage() {
       <h2>✅ 예매 완료</h2>
 
       <h4>💳 입금 계좌</h4>
-      <p>카카오뱅크 3333-00-0000000 (예금주: OBED)</p>
+      <p>카카오뱅크 7979-05-91479 (예금주: 김미정)</p>
 
       {tickets.map((ticket) => {
         const isConfirmed = ticket.status === "confirmed";
