@@ -43,9 +43,16 @@ export const requestConfirm = async (ticketId: number) => {
 
 // ✅ 환불 요청 API (status: 'refund_requested')
 export const requestRefund = async (id: number, refundAccount: string) => {
-  const res = await axios.patch(`${BASE_URL}/api/tickets/${id}/request-refund`, {
-    refundAccount,
-  });
+  const res = await axios.patch(
+    `${BASE_URL}/api/tickets/${id}/request-refund`,
+    { refundAccount },
+    {
+      headers: {
+        "Content-Type": "application/json", // ✅ 명시적으로 선언!
+      },
+    }
+  );
+
   return res.data;
 };
 
