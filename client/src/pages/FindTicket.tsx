@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { searchTicketByNamePhone } from "../api/ticket";
 import "../styles/FindTicket.css";
 
 export default function FindTicket() {
@@ -14,19 +14,16 @@ export default function FindTicket() {
     setError("");
 
     try {
-      const res = await axios.get(
-        `/api/tickets/search?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`
-      );
+      const res = await searchTicketByNamePhone(name, phone);
 
-      if (res.data && res.data.ticket) {
-        // ✅ 검색 성공 시 CompletePage로 이동 (쿼리 전달)
+      if (res) {
         navigate(`/complete?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`);
       } else {
         setError("예매 정보를 찾을 수 없습니다.");
       }
     } catch (err) {
-      console.error(err);
-      setError("검색 중 오류가 발생했습니다.");
+      console.error("❌ 검색 실패:", err);
+      setError("예매 정보를 찾을 수 없습니다.");
     }
   };
 
