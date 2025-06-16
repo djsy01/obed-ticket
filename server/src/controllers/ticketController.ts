@@ -141,3 +141,24 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
     res.status(500).json({ message: "DB 오류" });
   }
 };
+
+// ✅ 예약 취소 요청 (상태: 'cancelled')
+export const requestDeleteTicket = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.execute<ResultSetHeader>(
+      "UPDATE tickets SET status = 'cancelled' WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "해당 티켓 없음" });
+    }
+
+    res.status(200).json({ message: "예약이 취소되었습니다." });
+  } catch (err) {
+    console.error("❌ requestDeleteTicket 오류:", err);
+    res.status(500).json({ message: "DB 오류" });
+  }
+};

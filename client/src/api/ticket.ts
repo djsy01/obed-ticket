@@ -35,7 +35,7 @@ export const searchTicketByNamePhone = async (name: string, phone: string) => {
   return res.data;
 };
 
-// ✅ 송금 요청 API (status: 'requested')
+// ✅ 송금 요청 API (status: 'refund_confirm')
 export const requestConfirm = async (ticketId: number) => {
   const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-confirm`);
   return res.data;
@@ -46,5 +46,11 @@ export const requestRefund = async (ticketId: number, account: string) => {
   const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-refund`, {
     account,
   });
+  return res.data;
+};
+
+// ✅ 예약 취소 API (status: 'delete')
+export const requestDelete = async (ticketId: number) => {
+  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-delete`);
   return res.data;
 };

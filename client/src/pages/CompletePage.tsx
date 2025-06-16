@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { searchTicketByNamePhone, requestConfirm } from "../api/ticket";
+import { searchTicketByNamePhone, requestConfirm, requestDelete } from "../api/ticket";
 import "../styles/CompletePage.css";
 
 const getTicketTypeLabel = (type: string) => {
@@ -41,7 +41,7 @@ export default function CompletePage() {
     }
   };
 
-  const handleCancelClick = () => {
+  const handleCancelClick = async () => {
     if (!ticket) return;
 
     if (ticket.status === "requested" || ticket.status === "confirmed") {
@@ -57,10 +57,15 @@ export default function CompletePage() {
     } else {
       const ok = confirm("정말 예약을 취소하시겠습니까?");
       if (!ok) return;
-
-      // TODO: 백엔드 취소 API 연결 예정
-      alert("예약이 취소되었습니다.");
-      navigate("/");
+      
+      try {
+        await requestDelete(ticket.id);
+        alert("예약이 취소되었습니다.");
+        navigate("/");
+      } catch (err) {
+        console.error("예약 취소 오류:", err);
+        alert("취소 요청 중 오류가 발생했습니다.");
+      }
     }
   };
 
