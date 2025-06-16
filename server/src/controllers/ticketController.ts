@@ -114,6 +114,7 @@ export const requestConfirmTicket = async (req: Request, res: Response) => {
 export const requestRefundTicket = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { refundAccount } = req.body;
+  console.log("📥 환불 요청 body:", req.body);
 
   if (!refundAccount) {
     return res.status(400).json({ message: "환불 계좌는 필수입니다." });
