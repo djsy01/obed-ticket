@@ -1,52 +1,78 @@
 import { useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
 import { applyTicket } from "../api/ticket";
+import { useNavigate } from "react-router-dom";
 import "../styles/TicketForm.css";
 
 export default function TicketForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [ticketType, setTicketType] = useState<"student" | "adult">("student");
-  const [message, setMessage] = useState("");
+  const [phone, setPhone] = useState("");
+  const [ticketType, setTicketType] = useState<"" | "student" | "adult">("");
+  const [quantity, setQuantity] = useState(1);
+  const [memo, setMemo] = useState("");
 
-  const handleSubmit = async (e: FormEvent) => {
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!ticketType) {
+      alert("티켓 종류를 선택해주세요.");
+      return;
+    }
+
     try {
-      const result = await applyTicket({ name, email, ticketType });
-      setMessage(`✅ 신청 완료! 티켓 ID: ${result.ticketId}`);
+      const data = { name, email, phone, ticketType, quantity, memo };
+      await applyTicket(data);
+
+      const encodedName = encodeURIComponent(name);
+      const encodedPhone = encodeURIComponent(phone);
+      navigate(`/complete?name=${encodedName}&phone=${encodedPhone}`);
     } catch (err) {
+      alert("❌ 예매에 실패했습니다.");
       console.error(err);
-      setMessage("❌ 신청 실패");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="ticket-form">
       <h2>🎫 티켓 신청</h2>
-      <input
-        value={name}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-        placeholder="이름"
-        required
-      />
-      <input
-        value={email}
-        onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-        placeholder="이메일"
-        type="email"
-        required
-      />
+
+      <label>이름</label>
+      <input value={name} onChange={(e) => setName(e.target.value)} required />
+
+      <label>이메일</label>
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+
+      <label>전화번호</label>
+      <input value={phone} onChange={(e) => setPhone(e.target.value)} required />
+
+      <label>티켓 종류</label>
+      <small style={{ display: "block", marginBottom: "0.5rem", color: "#666" }}>
+        대학생은 성인으로 선택해주세요
+      </small>
       <select
         value={ticketType}
-        onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-          setTicketType(e.target.value as "student" | "adult")
-        }
+        onChange={(e) => setTicketType(e.target.value as "student" | "adult")}
+        required
       >
+        <option value="">티켓 종류를 선택하세요</option>
         <option value="student">학생</option>
         <option value="adult">성인</option>
       </select>
-      <button type="submit">신청</button>
-      <p>{message}</p>
+
+      <label>수량</label>
+      <input
+        type="number"
+        value={quantity}
+        min={1}
+        onChange={(e) => setQuantity(Number(e.target.value))}
+      />
+
+      <label>메모 (선택)</label>
+      <input value={memo} onChange={(e) => setMemo(e.target.value)} />
+
+      <button type="submit">예매하기</button>
     </form>
   );
 }
