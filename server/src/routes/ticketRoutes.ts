@@ -24,7 +24,7 @@ router.get("/search", getTicketByNameAndPhone);
 router.patch("/:id/request-confirm", requestConfirmTicket);
 
 // ✅ 사용자: 송금 완료 요청
-router.patch("/:id/request-payment", requestRefundTicket);
+router.patch("/:id/request-refund", requestRefundTicket);
 
 // ✅ 사용자: 예약 취소
 router.patch("/:id/request-delete", requestDeleteTicket);
