@@ -27,6 +27,8 @@ export default function RefundPage() {
     console.log("전달된 티켓 정보:", location.state);
     console.log("📦 넘어온 ticket 정보:", location.state);
     setTicket(location.state);
+    console.log("📦 넘어온 ticket 정보:", JSON.stringify(ticket, null, 2)); // 전체 구조 보기
+    console.log("🎯 ticket.id:", ticket.id); // 또는 ticket.ticketId
   }, [location.state, navigate]);
 
   const handleRefundSubmit = async () => {
