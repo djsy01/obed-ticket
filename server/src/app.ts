@@ -27,4 +27,9 @@ app.use(
 // ✅ 예매 관련 라우터 연결
 app.use("/api/tickets", ticketRoutes);
 
+// 핑보내기
+app.get("/api/health", (req, res) => {
+  res.send("✅ OBED API is alive");
+});
+
 export default app;
