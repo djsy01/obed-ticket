@@ -42,9 +42,9 @@ export const requestConfirm = async (ticketId: number) => {
 };
 
 // ✅ 환불 요청 API (status: 'refund_requested')
-export const requestRefund = async (ticketId: number, account: string) => {
+export const requestRefund = async (ticketId: number, refundAccount: string) => {
   const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-refund`, {
-    account,
+    refundAccount,
   });
   return res.data;
 };
