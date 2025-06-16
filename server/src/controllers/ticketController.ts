@@ -42,6 +42,9 @@ export const applyTicket = async (req: Request, res: Response) => {
 
 // ✅ 이름 + 전화번호로 조회
 export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
+  console.log("✅ /api/tickets/search 요청 도착");
+  console.log("🔍 name (decoded):", decodeURIComponent(String(req.query.name)));
+  console.log("🔍 phone (decoded):", decodeURIComponent(String(req.query.phone)));
   try {
     const name = decodeURIComponent(String(req.query.name));
     const phone = decodeURIComponent(String(req.query.phone));
