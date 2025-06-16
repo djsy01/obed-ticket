@@ -3,7 +3,7 @@ import { db } from "../db/index";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { v4 as uuidv4 } from "uuid";
 
-// 티켓 신청
+// ✅ 티켓 신청
 export const applyTicket = async (req: Request, res: Response) => {
   console.log("📥 티켓 신청 요청:", req.body);
   const {
@@ -40,15 +40,18 @@ export const applyTicket = async (req: Request, res: Response) => {
   }
 };
 
-// 이름 + 전화번호로 조회
+// ✅ 이름 + 전화번호로 조회
 export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
-  const { name, phone } = req.query;
-
-  if (!name || !phone) {
-    return res.status(400).json({ message: "이름과 전화번호는 필수입니다." });
-  }
-
   try {
+    const name = decodeURIComponent(String(req.query.name));
+    const phone = decodeURIComponent(String(req.query.phone));
+
+    console.log("🔍 티켓 조회 요청:", { name, phone });
+
+    if (!name || !phone) {
+      return res.status(400).json({ message: "이름과 전화번호는 필수입니다." });
+    }
+
     const [rows] = await db.execute<RowDataPacket[]>(
       `SELECT * FROM tickets
        WHERE name = ? AND phone = ?
@@ -68,7 +71,7 @@ export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
   }
 };
 
-// 입금 확인
+// ✅ 입금 확인
 export const confirmTicket = async (req: Request, res: Response) => {
   const { id } = req.params;
 
