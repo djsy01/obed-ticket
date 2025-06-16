@@ -1,0 +1,41 @@
+/* src/styles/FindTicket.css */
+
+.find-container {
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+  font-family: Arial, sans-serif;
+  box-sizing: border-box; /* ✅ 추가: padding이 width를 넘지 않게 */
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box; /* ✅ 좌우 간격 반영 */
+}
+
+button {
+  background-color: #222;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 1rem;
+  box-sizing: border-box; /* ✅ 버튼도 동일 처리 */
+}
+
+.ticket-card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-sizing: border-box; /* ✅ 카드도 포함 */
+}

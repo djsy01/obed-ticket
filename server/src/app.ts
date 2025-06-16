@@ -1,14 +1,12 @@
-import express from "express"
-import cors from "cors"
-import dotenv from "dotenv"
-import ticketRouter from "./routes/ticketRoutes"
-
-dotenv.config();
+import express from 'express';
+import cors from "cors";
+import ticketRoutes from './routes/ticketRoutes';
 
 const app = express();
-app.use(cors());
 app.use(express.json());
+app.use(cors());
 
-app.use("/tickets", ticketRouter);
+// 예매 관련 라우터 연결
+app.use("/api/tickets", ticketRoutes);
 
 export default app;

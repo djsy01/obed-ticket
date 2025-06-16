@@ -1,0 +1,25 @@
+/* CompletePage.css - 예매 완료 확인용 */
+
+.complete-container {
+  padding: 1.5rem;
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.complete-container h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.complete-container p {
+  font-size: 1rem;
+  margin: 0.5rem 0;
+}
+
+.complete-container hr {
+  margin: 1.5rem 0;
+  border: none;
+  border-top: 1px solid #ccc;
+}
