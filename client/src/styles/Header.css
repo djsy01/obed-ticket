@@ -1,43 +1,45 @@
-/* src/styles/Header.css - 모바일 최적화 */
+/* src/styles/Header.css */
 
 .header {
   width: 100%;
   max-width: 480px;
   margin: 0 auto;
   padding: 1rem 1rem 0.5rem;
-  border-bottom: 1px solid #ccc;
   background-color: #f9f9f9;
+  border-bottom: 1px solid #ccc;
   text-align: center;
   box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
+/* 제목 텍스트 */
 .header-title {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: bold;
   margin-bottom: 0.5rem;
+  color: #111;
 }
 
+/* 네비게이션 바 */
 .nav {
   display: flex;
   justify-content: space-around;
   gap: 0.5rem;
-  margin-top: 0.5rem;
   padding-bottom: 0.5rem;
 }
 
+/* 각 링크 */
 .nav-link {
   flex: 1;
   text-align: center;
-  padding: 0.6rem 0;
+  padding: 0.75rem 0;
   text-decoration: none;
   color: #222;
   font-weight: 600;
   font-size: 0.95rem;
-  border-radius: 6px;
+  border-radius: 8px;
   transition: background-color 0.2s ease-in-out;
 }
 
 .nav-link:hover {
-  background-color: #e0e0e0;
+  background-color: #ececec;
 }
