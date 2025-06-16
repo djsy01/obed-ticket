@@ -9,7 +9,6 @@ interface ApplyTicketParams {
   ticketType: "student" | "adult";
   quantity?: number;
   memo?: string;
-  eventId: number;
 }
 
 interface ApplyTicketResponse {
