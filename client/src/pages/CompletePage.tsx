@@ -79,6 +79,9 @@ export default function CompletePage() {
     <div className="complete-container">
       <h2>✅ 예매 완료</h2>
 
+      <h4>💳 입금 계좌</h4>
+      <p>카카오뱅크 3333-00-0000000 (예금주: OBED)</p>
+
       {tickets.map((ticket) => {
         const isConfirmed = ticket.status === "confirmed";
         const isConfirming = ticket.status === "requested";
@@ -126,9 +129,6 @@ export default function CompletePage() {
           </div>
         );
       })}
-
-      <h4>💳 입금 계좌</h4>
-      <p>카카오뱅크 3333-00-0000000 (예금주: OBED)</p>
     </div>
   );
 }
