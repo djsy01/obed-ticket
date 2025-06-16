@@ -94,3 +94,50 @@ export const confirmTicket = async (req: Request, res: Response) => {
     res.status(500).json({ message: "DB 오류" });
   }
 };
+
+// ✅ 송금 요청 (상태: 'requestConfirmTicket')
+export const requestConfirmTicket = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.execute<ResultSetHeader>(
+      "UPDATE tickets SET status = 'requested' WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "해당 티켓 없음" });
+    }
+
+    res.status(200).json({ message: "송금 요청 상태로 변경됨" });
+  } catch (err) {
+    console.error("❌ requestConfirmTicket 오류:", err);
+    res.status(500).json({ message: "DB 오류" });
+  }
+};
+
+//환불API
+export const requestRefundTicket = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { refundAccount } = req.body;
+
+  if (!refundAccount) {
+    return res.status(400).json({ message: "환불 계좌는 필수입니다." });
+  }
+
+  try {
+    const [result] = await db.execute<ResultSetHeader>(
+      "UPDATE tickets SET status = 'refunded', refund_account = ? WHERE id = ?",
+      [refundAccount, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "해당 티켓 없음" });
+    }
+
+    res.status(200).json({ message: "환불 요청 처리 완료" });
+  } catch (err) {
+    console.error("❌ requestRefundTicket 오류:", err);
+    res.status(500).json({ message: "DB 오류" });
+  }
+};

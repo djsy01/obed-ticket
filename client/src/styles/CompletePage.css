@@ -1,31 +1,84 @@
-/* src/styles/CompletePage.css */
-
 .complete-container {
-  width: 100%;
   max-width: 480px;
   margin: 0 auto;
-  padding: 1.25rem;
-  text-align: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  box-sizing: border-box;
+  padding: 2rem 1.5rem;
   background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  font-family: 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+  color: #333;
 }
 
 .complete-container h2 {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
+  font-weight: 700;
   margin-bottom: 1rem;
-  font-weight: bold;
+  text-align: center;
 }
 
 .complete-container p {
   font-size: 1rem;
-  margin: 0.5rem 0;
-  color: #333;
-  line-height: 1.4;
+  margin: 0.6rem 0;
+  line-height: 1.5;
 }
 
-.complete-container hr {
-  margin: 1.5rem 0;
+.complete-container h4 {
+  margin-top: 2rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+}
+
+.status-confirmed {
+  color: green;
+  font-weight: bold;
+}
+
+.status-pending {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.status-waiting {
+  color: #ff9800;
+  font-weight: bold;
+}
+
+.confirm-note {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #555;
+  text-align: center;
+}
+
+button.confirm-btn,
+button.cancel-btn {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 1rem;
+  font-size: 1rem;
+  font-weight: bold;
   border: none;
-  border-top: 1px solid #ccc;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+button.confirm-btn {
+  background-color: #222;
+  color: white;
+}
+
+button.confirm-btn:hover {
+  background-color: #444;
+}
+
+button.cancel-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+button.cancel-btn:hover {
+  background-color: #d32f2f;
 }

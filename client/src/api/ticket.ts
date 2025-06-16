@@ -1,4 +1,3 @@
-// src/api/ticket.ts
 import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -10,8 +9,8 @@ interface ApplyTicketParams {
   ticketType: "student" | "adult";
   quantity?: number;
   memo?: string;
+  eventId: number;
 }
-
 
 interface ApplyTicketResponse {
   ticketId: number;
@@ -33,6 +32,20 @@ export const getTicketStatus = async (id: string) => {
 export const searchTicketByNamePhone = async (name: string, phone: string) => {
   const res = await axios.get(`${BASE_URL}/api/tickets/search`, {
     params: { name, phone },
+  });
+  return res.data;
+};
+
+// ✅ 송금 요청 API (status: 'requested')
+export const requestConfirm = async (ticketId: number) => {
+  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-confirm`);
+  return res.data;
+};
+
+// ✅ 환불 요청 API (status: 'refund_requested')
+export const requestRefund = async (ticketId: number, account: string) => {
+  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-refund`, {
+    account,
   });
   return res.data;
 };

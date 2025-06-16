@@ -3,6 +3,7 @@ import Header from "./components/Header";
 import TicketForm from "./pages/TicketForm";
 import CompletePage from "./pages/CompletePage";
 import FindTicket from "./pages/FindTicket";
+import RefundPage from "./pages/RefundPage";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/" element={<TicketForm />} />
         <Route path="/complete" element={<CompletePage />} />
         <Route path="/find" element={<FindTicket />} />
+        <Route path="/refund" element={<RefundPage />} />
       </Routes>
     </Router>
   );

@@ -1,0 +1,79 @@
+.refund-container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  font-family: 'Apple SD Gothic Neo', 'Segoe UI', sans-serif;
+  color: #333;
+  text-align: left;
+}
+
+.refund-container h2 {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  color: #222;
+}
+
+.refund-container p {
+  font-size: 1rem;
+  margin: 0.4rem 0;
+  line-height: 1.5;
+  color: #444;
+}
+
+.refund-container label {
+  display: block;
+  margin-top: 1.2rem;
+  margin-bottom: 0.4rem;
+  font-weight: bold;
+  color: #555;
+}
+
+.refund-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.refund-input:focus {
+  border-color: #007bff;
+}
+
+.refund-button {
+  width: 100%;
+  padding: 0.85rem;
+  background-color: #007bff;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  transition: background-color 0.3s ease;
+}
+
+.refund-button:hover {
+  background-color: #0056b3;
+}
+
+.refund-button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.back-note {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: #888;
+  text-align: center;
+}
