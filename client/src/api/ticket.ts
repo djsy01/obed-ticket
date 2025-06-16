@@ -43,7 +43,7 @@ export const requestConfirm = async (ticketId: number) => {
 
 // ✅ 환불 요청 API (status: 'refund_requested')
 export const requestRefund = async (id: number, refundAccount: string) => {
-  const res = await fetch(`/api/tickets/${id}/request-refund`, {
+  const res = await fetch(`${BASE_URL}/api/tickets/${id}/request-refund`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
