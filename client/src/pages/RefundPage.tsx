@@ -27,7 +27,7 @@ export default function RefundPage() {
 
     setIsSubmitting(true);
     try {
-      await requestRefund(ticket.ticketId, accountInput);
+      await requestRefund(ticket.id, accountInput);
       alert("환불 요청이 완료되었습니다.");
       navigate("/");
     } catch (err) {
