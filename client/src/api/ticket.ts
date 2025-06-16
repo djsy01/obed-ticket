@@ -21,6 +21,7 @@ export const applyTicket = async (
   data: ApplyTicketParams
 ): Promise<ApplyTicketResponse> => {
   const res = await axios.post(`${BASE_URL}/api/tickets`, data);
+  console.log("🔥 BASE_URL:", BASE_URL);
   return res.data;
 };
 
