@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { requestRefund } from "../api/ticket";
 import "../styles/RefundPage.css";
@@ -11,13 +11,22 @@ const formatQuantity = (qty: number) => `${qty}매`;
 
 export default function RefundPage() {
   const location = useLocation();
-  const ticket = location.state;
   const navigate = useNavigate();
-
+  const [ticket, setTicket] = useState<any>(null); // 타입 안전하게 하려면 Ticket 타입 선언 추천
   const [accountInput, setAccountInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!ticket) return <p>잘못된 접근입니다.</p>;
+  useEffect(() => {
+    if (!location.state) {
+      alert("잘못된 접근입니다.");
+      navigate("/");
+      return;
+    }
+
+    // 실제 값 확인
+    console.log("전달된 티켓 정보:", location.state);
+    setTicket(location.state);
+  }, [location.state, navigate]);
 
   const handleRefundSubmit = async () => {
     if (!accountInput.trim()) {
@@ -25,18 +34,25 @@ export default function RefundPage() {
       return;
     }
 
+    if (!ticket || !ticket.id) {
+      alert("티켓 정보가 올바르지 않습니다.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      await requestRefund(ticket.id, accountInput);
+      await requestRefund(ticket.ticketId, accountInput);
       alert("환불 요청이 완료되었습니다.");
       navigate("/");
     } catch (err) {
-      console.error(err);
+      console.error("환불 요청 실패:", err);
       alert("요청 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  if (!ticket) return null;
 
   return (
     <div className="refund-container">
@@ -54,7 +70,11 @@ export default function RefundPage() {
         placeholder="은행명 + 계좌번호 (예: 카카오 3333-00-0000000)"
       />
 
-      <button className="refund-button" onClick={handleRefundSubmit} disabled={isSubmitting}>
+      <button
+        className="refund-button"
+        onClick={handleRefundSubmit}
+        disabled={isSubmitting}
+      >
         {isSubmitting ? "요청 중..." : "환불 요청"}
       </button>
     </div>
