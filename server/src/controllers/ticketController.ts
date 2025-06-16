@@ -40,16 +40,11 @@ export const applyTicket = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 이름 + 전화번호로 조회
+// ✅ 이름 + 전화번호로 조회 (취소되지 않은 모든 티켓 반환)
 export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
-  console.log("✅ /api/tickets/search 요청 도착");
-  console.log("🔍 name (decoded):", decodeURIComponent(String(req.query.name)));
-  console.log("🔍 phone (decoded):", decodeURIComponent(String(req.query.phone)));
   try {
     const name = decodeURIComponent(String(req.query.name));
     const phone = decodeURIComponent(String(req.query.phone));
-
-    console.log("🔍 티켓 조회 요청:", { name, phone });
 
     if (!name || !phone) {
       return res.status(400).json({ message: "이름과 전화번호는 필수입니다." });
@@ -57,19 +52,18 @@ export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
 
     const [rows] = await db.execute<RowDataPacket[]>(
       `SELECT * FROM tickets
-       WHERE name = ? AND phone = ?
-       ORDER BY created_at DESC
-       LIMIT 1`,
+       WHERE name = ? AND phone = ? AND status != 'cancelled'
+       ORDER BY created_at DESC`,
       [name, phone]
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "해당 정보로 티켓을 찾을 수 없습니다." });
+      return res.status(404).json({ message: "유효한 티켓이 없습니다." });
     }
 
-    res.status(200).json(rows[0]);
+    res.status(200).json(rows); // ✅ 여러 개의 티켓 반환
   } catch (err) {
-    console.error("❌ getTicketByNameAndPhone 오류:", err);
+    console.error("❌ getTicketsByNameAndPhone 오류:", err);
     res.status(500).json({ message: "DB 오류" });
   }
 };
