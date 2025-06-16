@@ -43,19 +43,11 @@ export const requestConfirm = async (ticketId: number) => {
 
 // ✅ 환불 요청 API (status: 'refund_requested')
 export const requestRefund = async (id: number, refundAccount: string) => {
-  const res = await fetch(`${BASE_URL}/api/tickets/${id}/request-refund`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ refundAccount }), // ✅ 백엔드가 기대하는 키 이름
+  const res = await axios.patch(`${BASE_URL}/api/tickets/${id}/request-refund`, {
+    refundAccount, // ✅ 자동으로 JSON stringify + Content-Type 설정
   });
 
-  if (!res.ok) {
-    throw new Error("환불 요청 실패");
-  }
-
-  return res.json();
+  return res.data;
 };
 
 // ✅ 예약 취소 API (status: 'delete')
