@@ -48,7 +48,7 @@ export const requestRefund = async (id: number, refundAccount: string) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ refundAccount }), // ✅ key 이름을 백엔드 기준에 맞춤
+    body: JSON.stringify({ refundAccount }), // ✅ 백엔드가 기대하는 키 이름
   });
 
   if (!res.ok) {
