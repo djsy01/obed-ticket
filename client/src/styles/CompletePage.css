@@ -92,3 +92,8 @@ button.cancel-btn {
 button.cancel-btn:hover {
   background-color: #d32f2f;
 }
+
+.status-refunding {
+  color: orange;
+  font-weight: bold;
+}

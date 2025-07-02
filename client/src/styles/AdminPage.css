@@ -1,5 +1,3 @@
-/* src/styles/AdminPage.css */
-
 .admin-container {
   padding: 1rem;
   font-family: "Arial", sans-serif;
@@ -13,12 +11,30 @@
   font-size: 1.5rem;
 }
 
-/* 테이블 기본 스타일 */
+/* 🔍 검색/필터 영역 */
+.admin-container .filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  justify-content: center;
+}
+
+.admin-container .filter-bar input,
+.admin-container .filter-bar select {
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 0.9rem;
+  min-width: 200px;
+}
+
+/* 📋 테이블 */
 .admin-container table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
-  min-width: 600px; /* 데스크탑에서는 넉넉하게 */
+  min-width: 600px;
 }
 
 .admin-container th,
@@ -34,6 +50,7 @@
   font-weight: bold;
 }
 
+/* ✅ 버튼 공통 스타일 */
 .admin-container button {
   padding: 0.5rem 0.75rem;
   background-color: #007bff;
@@ -55,6 +72,11 @@
     padding: 0.5rem;
   }
 
+  .admin-container .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .admin-container table {
     font-size: 0.75rem;
     min-width: unset;
@@ -73,7 +95,7 @@
   }
 }
 
-/* ✅ 아이폰 SE처럼 더 작은 화면 대응 */
+/* ✅ 초소형 디바이스 대응 */
 @media (max-width: 400px) {
   .admin-container table {
     font-size: 0.7rem;
@@ -82,5 +104,10 @@
   .admin-container button {
     padding: 0.4rem 0.5rem;
     font-size: 0.7rem;
+  }
+
+  .admin-container .filter-bar input,
+  .admin-container .filter-bar select {
+    font-size: 0.8rem;
   }
 }

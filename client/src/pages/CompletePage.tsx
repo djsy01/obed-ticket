@@ -100,10 +100,12 @@ export default function CompletePage() {
             <p><strong>수량:</strong> {formatQuantity(ticket.quantity)}</p>
             <p>
               <strong>상태:</strong>{" "}
-              {isConfirmed ? (
+              {ticket.status === "confirmed" ? (
                 <span className="status-confirmed">✅ 송금 완료</span>
-              ) : isConfirming ? (
+              ) : ticket.status === "requested" ? (
                 <span className="status-pending">⌛ 입금 확인 중</span>
+              ) : ticket.status === "refund_requested" ? (
+                <span className="status-refunding">💸 환불 요청됨</span>
               ) : (
                 <span className="status-waiting">💰 입금 대기 중</span>
               )}

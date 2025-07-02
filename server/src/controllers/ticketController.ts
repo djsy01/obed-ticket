@@ -115,30 +115,22 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { refundAccount } = req.body;
 
-  console.log("📥 [requestRefundTicket] id:", id);
-  console.log("📥 [requestRefundTicket] refundAccount:", refundAccount);
-
-  if (!refundAccount || refundAccount.trim() === "") {
+  if (!refundAccount) {
     return res.status(400).json({ message: "환불 계좌는 필수입니다." });
   }
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      `UPDATE tickets
-       SET status = 'refunded',
-           refund_account = ?
-       WHERE id = ?`,
+      "UPDATE tickets SET status = 'refund_requested', refund_account = ? WHERE id = ?",
       [refundAccount, id]
     );
-
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "해당 티켓이 없습니다." });
+      return res.status(404).json({ message: "티켓 없음" });
     }
-
-    return res.status(200).json({ message: "환불 요청 완료" });
+    return res.status(200).json({ message: "환불 요청됨" });
   } catch (err) {
-    console.error("❌ [requestRefundTicket] DB 오류:", err);
-    return res.status(500).json({ message: "서버 내부 오류" });
+    console.error("❌ 환불 요청 실패:", err);
+    return res.status(500).json({ message: "서버 오류" });
   }
 };
 
@@ -226,7 +218,7 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'refunded' WHERE id = ? AND status = 'refund_requested'",
+      "UPDATE tickets SET status = 'cancelled' WHERE id = ? AND status = 'refund_requested'",
       [id]
     );
 
