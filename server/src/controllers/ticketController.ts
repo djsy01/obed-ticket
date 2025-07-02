@@ -142,11 +142,16 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
 // ✅ 예약 취소 요청 (상태: 'cancelled')
 export const requestDeleteTicket = async (req: Request, res: Response) => {
   const { id } = req.params;
+  const { refundAccount } = req.body;
+
+  if (!refundAccount) {
+    return res.status(400).json({ message: "환불 계좌는 필수입니다." });
+  }
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'cancelled' WHERE id = ?",
-      [id]
+      "UPDATE tickets SET status = 'cancelled', refund_account = ? WHERE id = ?",
+      [refundAccount, id]
     );
 
     if (result.affectedRows === 0) {
