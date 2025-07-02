@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { requestRefund } from "../api/ticket";
+import { requestRefund, requestDelete } from "../api/ticket";
 import "../styles/RefundPage.css";
 
 const getTicketTypeLabel = (type: string) => {
@@ -16,6 +16,9 @@ export default function RefundPage() {
   const [ticket, setTicket] = useState<any>(null);
   const [accountInput, setAccountInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ✅ 환불 타입: 입금 전 취소 or 입금 후 환불 요청
+  const refundMode = location.state?.refundMode ?? "refund";
 
   useEffect(() => {
     if (!location.state) {
@@ -42,12 +45,18 @@ export default function RefundPage() {
 
     setIsSubmitting(true);
     try {
-      await requestRefund(ticket.ticketId, accountInput); // ✅ ticket.ticketId 사용
-      alert("환불 요청이 완료되었습니다.");
+      if (refundMode === "cancel") {
+        // ✅ 입금 전 → 바로 취소
+        await requestDelete(ticket.ticketId, accountInput);
+      } else {
+        // ✅ 입금 후 → 환불 요청
+        await requestRefund(ticket.ticketId, accountInput);
+      }
+
+      alert("요청이 완료되었습니다.");
       navigate("/");
     } catch (err) {
-      console.error("환불 요청 실패:", err);
-      console.error("❌ 요청 자체 실패:", err);
+      console.error("요청 실패:", err);
       alert("요청 중 오류가 발생했습니다.");
     } finally {
       setIsSubmitting(false);
@@ -58,7 +67,8 @@ export default function RefundPage() {
 
   return (
     <div className="refund-container">
-      <h2>💸 환불 요청</h2>
+      <h2>💸 {refundMode === "cancel" ? "예약 취소" : "환불 요청"}</h2>
+
       <p><strong>예매자:</strong> {ticket.name}</p>
       <p><strong>전화번호:</strong> {ticket.phone}</p>
       <p><strong>티켓 종류:</strong> {getTicketTypeLabel(ticket.ticketType)}</p>
@@ -77,7 +87,7 @@ export default function RefundPage() {
         onClick={handleRefundSubmit}
         disabled={isSubmitting}
       >
-        {isSubmitting ? "요청 중..." : "환불 요청"}
+        {isSubmitting ? "요청 중..." : refundMode === "cancel" ? "예약 취소" : "환불 요청"}
       </button>
     </div>
   );

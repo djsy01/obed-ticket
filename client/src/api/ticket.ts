@@ -57,7 +57,27 @@ export const requestRefund = async (id: number, refundAccount: string) => {
 };
 
 // ✅ 예약 취소 API (status: 'delete')
-export const requestDelete = async (ticketId: number) => {
-  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-delete`);
+export const requestDelete = async (ticketId: number, refundAccount: string) => {
+  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-delete`, {
+    refundAccount,
+  });
+  return res.data;
+};
+
+// ✅ 관리자: 모든 티켓 조회
+export const getAllTickets = async () => {
+  const res = await axios.get(`${BASE_URL}/api/tickets/all`);
+  return res.data;
+};
+
+// ✅ 관리자: 티켓 상태 확인 (입금 확인)
+export const requestConfirmByAdmin = async (ticketId: number) => {
+  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/confirm`);
+  return res.data;
+};
+
+// ✅ 관리자: 환불 상태 확인
+export const requestRefundConfirmByAdmin = async (ticketId: number) => {
+  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/confirm-refund`);
   return res.data;
 };

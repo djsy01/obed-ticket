@@ -110,13 +110,10 @@ export const requestConfirmTicket = async (req: Request, res: Response) => {
   }
 };
 
-//환불API
+// ✅ 환불 요청
 export const requestRefundTicket = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { refundAccount } = req.body;
-  console.log("📥 환불 요청 도착");
-  console.log("📥 ID 파라미터:", id);
-  console.log("📥 환불 계좌:", refundAccount);
 
   if (!refundAccount) {
     return res.status(400).json({ message: "환불 계좌는 필수입니다." });
@@ -124,7 +121,7 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'refunded', refund_account = ? WHERE id = ?",
+      "UPDATE tickets SET status = 'refund_requested', refund_account = ? WHERE id = ?",
       [refundAccount, id]
     );
 
@@ -132,35 +129,106 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "해당 티켓 없음" });
     }
 
-    res.status(200).json({ message: "환불 요청 처리 완료" });
+    res.status(200).json({ message: "환불 요청이 접수되었습니다." });
   } catch (err) {
     console.error("❌ requestRefundTicket 오류:", err);
     res.status(500).json({ message: "DB 오류" });
   }
 };
 
+
 // ✅ 예약 취소 요청 (상태: 'cancelled')
 export const requestDeleteTicket = async (req: Request, res: Response) => {
   const { id } = req.params;
   const { refundAccount } = req.body;
 
-  if (!refundAccount) {
-    return res.status(400).json({ message: "환불 계좌는 필수입니다." });
-  }
-
   try {
-    const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'cancelled', refund_account = ? WHERE id = ?",
-      [refundAccount, id]
+    // 현재 상태 확인
+    const [rows] = await db.execute<RowDataPacket[]>(
+      "SELECT status FROM tickets WHERE id = ?",
+      [id]
     );
 
-    if (result.affectedRows === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ message: "해당 티켓 없음" });
+    }
+
+    const currentStatus = rows[0].status;
+
+    // ✅ 입금 전(pending)인 경우 환불 계좌 없이도 취소 허용
+    if (currentStatus === "pending") {
+      await db.execute<ResultSetHeader>(
+        "UPDATE tickets SET status = 'cancelled' WHERE id = ?",
+        [id]
+      );
+    } else {
+      // 입금 이후라면 환불 계좌가 필요함
+      if (!refundAccount) {
+        return res.status(400).json({ message: "환불 계좌는 필수입니다." });
+      }
+
+      await db.execute<ResultSetHeader>(
+        "UPDATE tickets SET status = 'cancelled', refund_account = ? WHERE id = ?",
+        [refundAccount, id]
+      );
     }
 
     res.status(200).json({ message: "예약이 취소되었습니다." });
   } catch (err) {
     console.error("❌ requestDeleteTicket 오류:", err);
     res.status(500).json({ message: "DB 오류" });
+  }
+};
+
+// ✅ 전체 티켓 조회 (관리자용)
+export const getAllTickets = async (req: Request, res: Response) => {
+  try {
+    const [rows] = await db.query("SELECT * FROM tickets ORDER BY created_at DESC");
+    res.status(200).json(rows);
+  } catch (error) {
+    console.error("❌ 전체 티켓 조회 실패:", error);
+    res.status(500).json({ message: "전체 조회 실패" });
+  }
+};
+
+// ✅ 티켓 상태 조회 (개별 티켓용)
+export const confirmTicketByAdmin = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.execute<ResultSetHeader>(
+      "UPDATE tickets SET status = 'confirmed' WHERE id = ?",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "해당 티켓을 찾을 수 없습니다." });
+    }
+
+    res.status(200).json({ message: "입금 확인 완료" });
+  } catch (error) {
+    console.error("❌ 관리자 입금 확인 실패:", error);
+    res.status(500).json({ message: "입금 확인 처리 실패" });
+  }
+};
+
+// ✅ 환불 완료 처리 (관리자용)
+export const confirmRefundByAdmin = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  try {
+    const [result] = await db.execute<ResultSetHeader>(
+      "UPDATE tickets SET status = 'refunded' WHERE id = ? AND status = 'refund_requested'",
+      [id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "환불 요청 상태의 티켓이 없습니다." });
+    }
+
+    res.status(200).json({ message: "환불 완료 처리되었습니다." });
+  } catch (err) {
+    console.error("❌ confirmRefundByAdmin 오류:", err);
+    res.status(500).json({ message: "환불 처리 실패" });
   }
 };

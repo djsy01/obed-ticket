@@ -4,6 +4,7 @@ import TicketForm from "./pages/TicketForm";
 import CompletePage from "./pages/CompletePage";
 import FindTicket from "./pages/FindTicket";
 import RefundPage from "./pages/RefundPage";
+import AdminPage from "./pages/AdminPage";
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
         <Route path="/complete" element={<CompletePage />} />
         <Route path="/find" element={<FindTicket />} />
         <Route path="/refund" element={<RefundPage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Routes>
     </Router>
   );

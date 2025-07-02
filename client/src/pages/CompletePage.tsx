@@ -47,7 +47,8 @@ export default function CompletePage() {
   };
 
   const handleCancelClick = async (ticket: any) => {
-    if (ticket.status === "requested" || ticket.status === "confirmed") {
+    if (ticket.status === "confirmed") {
+      // 입금 후 환불 요청
       navigate("/refund", {
         state: {
           name: ticket.name,
@@ -55,20 +56,24 @@ export default function CompletePage() {
           ticketId: ticket.id,
           ticketType: ticket.ticket_type,
           quantity: ticket.quantity,
+          refundMode: "refund",
         },
       });
     } else {
+      // 입금 전 취소
       const ok = confirm("정말 예약을 취소하시겠습니까?");
       if (!ok) return;
 
-      try {
-        await requestDelete(ticket.id);
-        alert("예약이 취소되었습니다.");
-        setTickets((prev) => prev.filter((t) => t.id !== ticket.id));
-      } catch (err) {
-        console.error("예약 취소 오류:", err);
-        alert("취소 요청 중 오류가 발생했습니다.");
-      }
+      navigate("/refund", {
+        state: {
+          name: ticket.name,
+          phone: ticket.phone,
+          ticketId: ticket.id,
+          ticketType: ticket.ticket_type,
+          quantity: ticket.quantity,
+          refundMode: "cancel",
+        },
+      });
     }
   };
 
