@@ -2,8 +2,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   searchTicketByNamePhone,
-  requestConfirm,
-  requestDelete,
+  requestConfirm
 } from "../api/ticket";
 import "../styles/CompletePage.css";
 
