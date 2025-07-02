@@ -66,6 +66,62 @@
   background-color: #0056b3;
 }
 
+/* ✅ 기존 내용 유지 + 아래 추가 */
+
+.admin-controls {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-controls input,
+.admin-controls select {
+  padding: 0.5rem;
+  font-size: 0.85rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.admin-controls button {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.admin-controls button.add {
+  background-color: #28a745;
+}
+
+.admin-controls button.add:hover {
+  background-color: #218838;
+}
+
+/* ✅ 테이블 행 강조 */
+.admin-container tr:hover {
+    background-color: #f0f8ff;
+}
+
+/* ✅ 테이블 정렬 아이콘 */
+.admin-container th.sortable {
+  cursor: pointer;
+  position: relative;
+}
+.admin-container th.sortable::after {
+  content: "▲";
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  color: #888;
+}  
+.admin-container th.sortable.sorted-asc::after {
+  content: "▲";
+}
+.admin-container th.sortable.sorted-desc::after {
+  content: "▼";
+}  
+
 /* ✅ 모바일 대응 */
 @media (max-width: 768px) {
   .admin-container {

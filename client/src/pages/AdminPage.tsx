@@ -7,6 +7,17 @@ import {
 import "../styles/AdminPage.css";
 import { useNavigate, useLocation } from "react-router-dom";
 
+type Ticket = {
+  id: number;
+  name: string;
+  phone: string;
+  ticket_type: "student" | "adult";
+  quantity: number;
+  status: string;
+  refund_account?: string;
+  created_at: string;
+};
+
 const getStatusLabel = (status: string) => {
   switch (status) {
     case "pending":
@@ -27,7 +38,7 @@ const getStatusLabel = (status: string) => {
 };
 
 export default function AdminPage() {
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [filter, setFilter] = useState("all");
@@ -35,11 +46,9 @@ export default function AdminPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ 관리자 접근 제한: 쿼리스트링 key 검사
   useEffect(() => {
     const secret = import.meta.env.VITE_ADMIN_SECRET;
     const queryKey = new URLSearchParams(location.search).get("key");
-
     if (!secret || queryKey !== secret) {
       alert("접근 권한이 없습니다.");
       navigate("/");
@@ -48,12 +57,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     getAllTickets()
-      .then((data) => {
-        const sorted = data.sort((a, b) => {
-            const nameA = a.name ?? "";
-            const nameB = b.name ?? "";
-            return nameA.localeCompare(nameB, "ko");
-        });
+      .then((data: Ticket[]) => {
+        const sorted = data.sort((a, b) =>
+          (a.name ?? "").localeCompare(b.name ?? "", "ko")
+        );
         setTickets(sorted);
       })
       .catch(() => alert("티켓 조회 실패"))
@@ -87,7 +94,8 @@ export default function AdminPage() {
     <div className="admin-container">
       <h2>🎫 관리자 페이지</h2>
 
-      <div style={{ marginBottom: "1rem", display: "flex", gap: "1rem" }}>
+      {/* 🔍 검색/필터 바 */}
+      <div className="filter-bar">
         <input
           type="text"
           placeholder="이름 또는 전화번호 검색"
