@@ -5,7 +5,7 @@ import {
   requestRefundConfirmByAdmin,
 } from "../api/ticket";
 import "../styles/AdminPage.css";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 type Ticket = {
   id: number;
@@ -42,30 +42,34 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [filter, setFilter] = useState("all");
-
+  const [authorized, setAuthorized] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
-    const secret = import.meta.env.VITE_ADMIN_SECRET;
-    const queryKey = new URLSearchParams(location.search).get("key");
-    if (!secret || queryKey !== secret) {
-      alert("접근 권한이 없습니다.");
+    const adminKey = import.meta.env.VITE_ADMIN_SECRET;
+    const input = prompt("🔐 관리자 비밀번호를 입력하세요:");
+
+    if (input === adminKey) {
+      setAuthorized(true);
+    } else {
+      alert("❌ 접근 권한이 없습니다.");
       navigate("/");
     }
-  }, [location.search, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
+    if (!authorized) return;
+
     getAllTickets()
       .then((data: Ticket[]) => {
-        const sorted = data.sort((a, b) =>
+        const sorted = data.sort((a: Ticket, b: Ticket) =>
           (a.name ?? "").localeCompare(b.name ?? "", "ko")
         );
         setTickets(sorted);
       })
       .catch(() => alert("티켓 조회 실패"))
       .finally(() => setLoading(false));
-  }, []);
+  }, [authorized]);
 
   const handleConfirm = async (id: number) => {
     await requestConfirmByAdmin(id);
@@ -88,13 +92,13 @@ export default function AdminPage() {
     return keywordMatch && filterMatch;
   });
 
+  if (!authorized) return null;
   if (loading) return <p>로딩 중...</p>;
 
   return (
     <div className="admin-container">
       <h2>🎫 관리자 페이지</h2>
 
-      {/* 🔍 검색/필터 바 */}
       <div className="filter-bar">
         <input
           type="text"
