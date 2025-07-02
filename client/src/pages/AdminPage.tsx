@@ -1,90 +1,149 @@
 import { useEffect, useState } from "react";
-import { requestConfirmByAdmin, requestRefundConfirmByAdmin, getAllTickets } from "../api/ticket";
-import "../styles/AdminPage.css"; // 선택적으로 스타일 작성 가능
+import {
+  getAllTickets,
+  requestConfirmByAdmin,
+  requestRefundConfirmByAdmin,
+} from "../api/ticket";
+import "../styles/AdminPage.css";
+import { useNavigate, useLocation } from "react-router-dom";
 
-interface Ticket {
+type Ticket = {
   id: number;
   name: string;
   phone: string;
-  ticket_type: string;
-  status: string;
-  created_at: string;
+  ticket_type: "student" | "adult";
   quantity: number;
+  status: string;
   refund_account?: string;
-}
+  created_at: string;
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "pending":
+      return "💰 입금 대기";
+    case "requested":
+      return "⌛ 입금 확인 중";
+    case "confirmed":
+      return "✅ 입금 완료";
+    case "refund_requested":
+      return "💸 환불 요청됨";
+    case "cancelled":
+      return "❌ 취소됨";
+    case "refunded":
+      return "💸 환불 완료";
+    default:
+      return status;
+  }
+};
 
 export default function AdminPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [filter, setFilter] = useState("all");
 
-  const fetchTickets = async () => {
-    try {
-      const data = await getAllTickets();
-      setTickets(data);
-    } catch (err) {
-      alert("티켓 불러오기 실패");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    fetchTickets();
+    const secret = import.meta.env.VITE_ADMIN_SECRET;
+    const queryKey = new URLSearchParams(location.search).get("key");
+    if (!secret || queryKey !== secret) {
+      alert("접근 권한이 없습니다.");
+      navigate("/");
+    }
+  }, [location.search, navigate]);
+
+  useEffect(() => {
+    getAllTickets()
+      .then((data: Ticket[]) => {
+        const sorted = data.sort((a, b) =>
+          (a.name ?? "").localeCompare(b.name ?? "", "ko")
+        );
+        setTickets(sorted);
+      })
+      .catch(() => alert("티켓 조회 실패"))
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleConfirmClick = async (ticketId: number) => {
-    try {
-      await requestConfirmByAdmin(ticketId);
-      fetchTickets();
-    } catch (err) {
-      alert("입금 확인 실패");
-      console.error(err);
-    }
+  const handleConfirm = async (id: number) => {
+    await requestConfirmByAdmin(id);
+    setTickets((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: "confirmed" } : t))
+    );
   };
 
-  const handleRefundConfirmClick = async (ticketId: number) => {
-    try {
-      await requestRefundConfirmByAdmin(ticketId);
-      fetchTickets();
-    } catch (err) {
-      alert("환불 처리 실패");
-      console.error(err);
-    }
+  const handleRefund = async (id: number) => {
+    await requestRefundConfirmByAdmin(id);
+    setTickets((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, status: "refunded" } : t))
+    );
   };
+
+  const filteredTickets = tickets.filter((ticket) => {
+    const keywordMatch =
+      ticket.name.includes(searchText) || ticket.phone.includes(searchText);
+    const filterMatch = filter === "all" || ticket.status === filter;
+    return keywordMatch && filterMatch;
+  });
 
   if (loading) return <p>로딩 중...</p>;
 
   return (
     <div className="admin-container">
-      <h2>🎫 전체 티켓 현황</h2>
+      <h2>🎫 관리자 페이지</h2>
+
+      {/* 🔍 검색/필터 바 */}
+      <div className="filter-bar">
+        <input
+          type="text"
+          placeholder="이름 또는 전화번호 검색"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+        />
+        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+          <option value="all">전체</option>
+          <option value="pending">입금 대기</option>
+          <option value="requested">입금 확인 중</option>
+          <option value="confirmed">입금 완료</option>
+          <option value="refund_requested">환불 요청됨</option>
+          <option value="cancelled">취소됨</option>
+          <option value="refunded">환불 완료</option>
+        </select>
+      </div>
+
       <table>
         <thead>
           <tr>
+            <th>ID</th>
             <th>이름</th>
-            <th>전화</th>
-            <th>종류</th>
+            <th>전화번호</th>
+            <th>티켓 종류</th>
             <th>수량</th>
             <th>상태</th>
-            <th>시간</th>
-            <th>확인</th>
+            <th>환불 계좌</th>
+            <th>요청일</th>
+            <th>액션</th>
           </tr>
         </thead>
         <tbody>
-          {tickets.map((t) => (
+          {filteredTickets.map((t) => (
             <tr key={t.id}>
+              <td>{t.id}</td>
               <td>{t.name}</td>
               <td>{t.phone}</td>
-              <td>{t.ticket_type}</td>
+              <td>{t.ticket_type === "student" ? "학생" : "성인"}</td>
               <td>{t.quantity}</td>
-              <td>{t.status}</td>
+              <td>{getStatusLabel(t.status)}</td>
+              <td>{t.refund_account || "-"}</td>
               <td>{new Date(t.created_at).toLocaleString()}</td>
               <td>
                 {t.status === "requested" && (
-                  <button onClick={() => handleConfirmClick(t.id)}>입금 확인</button>
+                  <button onClick={() => handleConfirm(t.id)}>입금 완료</button>
                 )}
                 {t.status === "refund_requested" && (
-                  <button onClick={() => handleRefundConfirmClick(t.id)}>환불 처리</button>
+                  <button onClick={() => handleRefund(t.id)}>환불 완료</button>
                 )}
               </td>
             </tr>
