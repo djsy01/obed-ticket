@@ -1,0 +1,86 @@
+/* src/styles/AdminPage.css */
+
+.admin-container {
+  padding: 1rem;
+  font-family: "Arial", sans-serif;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.admin-container h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+/* 테이블 기본 스타일 */
+.admin-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  min-width: 600px; /* 데스크탑에서는 넉넉하게 */
+}
+
+.admin-container th,
+.admin-container td {
+  padding: 0.75rem;
+  text-align: center;
+  border: 1px solid #ccc;
+  word-break: break-word;
+}
+
+.admin-container th {
+  background-color: #f5f5f5;
+  font-weight: bold;
+}
+
+.admin-container button {
+  padding: 0.5rem 0.75rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.admin-container button:hover {
+  background-color: #0056b3;
+}
+
+/* ✅ 모바일 대응 */
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 0.5rem;
+  }
+
+  .admin-container table {
+    font-size: 0.75rem;
+    min-width: unset;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .admin-container th,
+  .admin-container td {
+    padding: 0.5rem;
+  }
+
+  .admin-container h2 {
+    font-size: 1.2rem;
+  }
+}
+
+/* ✅ 아이폰 SE처럼 더 작은 화면 대응 */
+@media (max-width: 400px) {
+  .admin-container table {
+    font-size: 0.7rem;
+  }
+
+  .admin-container button {
+    padding: 0.4rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}

@@ -4,7 +4,10 @@ import {
   getTicketByNameAndPhone,
   requestConfirmTicket,
   requestRefundTicket,
-  requestDeleteTicket
+  requestDeleteTicket,
+  getAllTickets,
+  confirmTicketByAdmin,
+  confirmRefundByAdmin
 } from "../controllers/ticketController";
 
 const router = Router();
@@ -28,5 +31,14 @@ router.patch("/:id/request-refund", requestRefundTicket);
 
 // ✅ 사용자: 예약 취소
 router.patch("/:id/request-delete", requestDeleteTicket);
+
+// ✅ 관리자: 모든 티켓 조회
+router.get("/all", getAllTickets);
+
+// ✅ 관리자: 티켓 상태 확인 (입금 확인)
+router.patch("/:id/confirm", confirmTicketByAdmin);
+
+// ✅ 관리자: 환불 상태 확인
+router.patch("/:id/confirm-refund", confirmRefundByAdmin);
 
 export default router;
