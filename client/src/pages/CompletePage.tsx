@@ -2,7 +2,8 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import {
   searchTicketByNamePhone,
-  requestConfirm
+  requestConfirm,
+  requestDelete,
 } from "../api/ticket";
 import "../styles/CompletePage.css";
 
@@ -46,33 +47,34 @@ export default function CompletePage() {
   };
 
   const handleCancelClick = async (ticket: any) => {
-    if (ticket.status === "confirmed") {
-      // 입금 후 환불 요청
+    const { id, name, phone, ticket_type, quantity, status } = ticket;
+
+    if (status === "pending") {
+      const ok = confirm("정말 예약을 취소하시겠습니까?");
+      if (!ok) return;
+
+      try {
+        await requestDelete(id, ""); // 환불 계좌 없이 즉시 취소
+        alert("예약이 취소되었습니다.");
+        setTickets((prev) => prev.filter((t) => t.id !== id));
+      } catch (err) {
+        console.error("예약 취소 오류:", err);
+        alert("오류가 발생했습니다.");
+      }
+    } else if (status === "requested" || status === "confirmed") {
+      // 입금 확인 요청 중 또는 완료 → 환불 페이지 이동
       navigate("/refund", {
         state: {
-          name: ticket.name,
-          phone: ticket.phone,
-          ticketId: ticket.id,
-          ticketType: ticket.ticket_type,
-          quantity: ticket.quantity,
+          name,
+          phone,
+          ticketId: id,
+          ticketType: ticket_type,
+          quantity,
           refundMode: "refund",
         },
       });
     } else {
-      // 입금 전 취소
-      const ok = confirm("정말 예약을 취소하시겠습니까?");
-      if (!ok) return;
-
-      navigate("/refund", {
-        state: {
-          name: ticket.name,
-          phone: ticket.phone,
-          ticketId: ticket.id,
-          ticketType: ticket.ticket_type,
-          quantity: ticket.quantity,
-          refundMode: "cancel",
-        },
-      });
+      alert("이미 취소되었거나 환불이 진행 중입니다.");
     }
   };
 

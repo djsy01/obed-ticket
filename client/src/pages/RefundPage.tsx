@@ -3,10 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { requestRefund, requestDelete } from "../api/ticket";
 import "../styles/RefundPage.css";
 
-const getTicketTypeLabel = (type: string) => {
-  return type === "student" ? "학생" : "성인";
-};
-
+const getTicketTypeLabel = (type: string) =>
+  type === "student" ? "학생" : "성인";
 const formatQuantity = (qty: number) => `${qty}매`;
 
 export default function RefundPage() {
@@ -16,8 +14,6 @@ export default function RefundPage() {
   const [ticket, setTicket] = useState<any>(null);
   const [accountInput, setAccountInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // ✅ 환불 타입: 입금 전 취소 or 입금 후 환불 요청
   const refundMode = location.state?.refundMode ?? "refund";
 
   useEffect(() => {
@@ -27,9 +23,7 @@ export default function RefundPage() {
       return;
     }
 
-    const incomingTicket = location.state;
-    console.log("📦 전달된 ticket 정보:", JSON.stringify(incomingTicket, null, 2));
-    setTicket(incomingTicket);
+    setTicket(location.state);
   }, [location.state, navigate]);
 
   const handleRefundSubmit = async () => {
@@ -38,21 +32,18 @@ export default function RefundPage() {
       return;
     }
 
-    if (!ticket || !ticket.ticketId) {
+    if (!ticket?.ticketId) {
       alert("티켓 정보가 올바르지 않습니다.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      if (refundMode === "cancel") {
-        // ✅ 입금 전 → 바로 취소
-        await requestDelete(ticket.ticketId, accountInput);
-      } else {
-        // ✅ 입금 후 → 환불 요청
+      if (refundMode === "refund") {
         await requestRefund(ticket.ticketId, accountInput);
+      } else if (refundMode === "cancel") {
+        await requestDelete(ticket.ticketId, accountInput);
       }
-
       alert("요청이 완료되었습니다.");
       navigate("/");
     } catch (err) {
@@ -67,8 +58,7 @@ export default function RefundPage() {
 
   return (
     <div className="refund-container">
-      <h2>💸 {refundMode === "cancel" ? "예약 취소" : "환불 요청"}</h2>
-
+      <h2>{refundMode === "refund" ? "💸 환불 요청" : "❌ 예약 취소"}</h2>
       <p><strong>예매자:</strong> {ticket.name}</p>
       <p><strong>전화번호:</strong> {ticket.phone}</p>
       <p><strong>티켓 종류:</strong> {getTicketTypeLabel(ticket.ticketType)}</p>
@@ -87,7 +77,11 @@ export default function RefundPage() {
         onClick={handleRefundSubmit}
         disabled={isSubmitting}
       >
-        {isSubmitting ? "요청 중..." : refundMode === "cancel" ? "예약 취소" : "환불 요청"}
+        {isSubmitting
+          ? "요청 중..."
+          : refundMode === "refund"
+          ? "환불 요청"
+          : "예약 취소 요청"}
       </button>
     </div>
   );
