@@ -49,7 +49,8 @@ export default function AdminPage() {
   useEffect(() => {
     getAllTickets()
       .then((data) => {
-        setTickets(data);
+        const sorted = data.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+        setTickets(sorted);
       })
       .catch(() => alert("티켓 조회 실패"))
       .finally(() => setLoading(false));
