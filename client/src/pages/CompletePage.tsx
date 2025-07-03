@@ -9,7 +9,18 @@ import "../styles/CompletePage.css";
 
 const getTicketTypeLabel = (type: string) =>
   type === "student" ? "학생" : "성인";
+
 const formatQuantity = (qty: number) => `${qty}매`;
+
+const TICKET_PRICES: Record<string, number> = {
+  student: 5000,
+  adult: 10000,
+};
+
+const getTicketPrice = (type: string) => TICKET_PRICES[type] || 0;
+
+const formatPrice = (price: number) =>
+  price.toLocaleString("ko-KR") + "원";
 
 export default function CompletePage() {
   const [searchParams] = useSearchParams();
@@ -54,7 +65,7 @@ export default function CompletePage() {
       if (!ok) return;
 
       try {
-        await requestDelete(id, ""); // 환불 계좌 없이 즉시 취소
+        await requestDelete(id, "");
         alert("예약이 취소되었습니다.");
         setTickets((prev) => prev.filter((t) => t.id !== id));
       } catch (err) {
@@ -62,7 +73,6 @@ export default function CompletePage() {
         alert("오류가 발생했습니다.");
       }
     } else if (status === "requested" || status === "confirmed") {
-      // 입금 확인 요청 중 또는 완료 → 환불 페이지 이동
       navigate("/refund", {
         state: {
           name,
@@ -91,6 +101,7 @@ export default function CompletePage() {
       {tickets.map((ticket) => {
         const isConfirmed = ticket.status === "confirmed";
         const isConfirming = ticket.status === "requested";
+        const totalPrice = getTicketPrice(ticket.ticket_type) * ticket.quantity;
 
         return (
           <div key={ticket.id} className="ticket-box">
@@ -98,6 +109,7 @@ export default function CompletePage() {
             <p><strong>전화번호:</strong> {ticket.phone}</p>
             <p><strong>티켓 종류:</strong> {getTicketTypeLabel(ticket.ticket_type)}</p>
             <p><strong>수량:</strong> {formatQuantity(ticket.quantity)}</p>
+            <p><strong>총 금액:</strong> {formatPrice(totalPrice)}</p>
             <p>
               <strong>상태:</strong>{" "}
               {ticket.status === "confirmed" ? (

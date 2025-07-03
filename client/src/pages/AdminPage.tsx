@@ -47,9 +47,16 @@ export default function AdminPage() {
 
   useEffect(() => {
     const adminKey = import.meta.env.VITE_ADMIN_SECRET;
-    const input = prompt("🔐 관리자 비밀번호를 입력하세요:");
+    const storedAuth = localStorage.getItem("isAdmin");
 
+    if (storedAuth === "true") {
+      setAuthorized(true);
+      return;
+    }
+
+    const input = prompt("🔐 관리자 비밀번호를 입력하세요:");
     if (input === adminKey) {
+      localStorage.setItem("isAdmin", "true");
       setAuthorized(true);
     } else {
       alert("❌ 접근 권한이 없습니다.");
@@ -62,7 +69,7 @@ export default function AdminPage() {
 
     getAllTickets()
       .then((data: Ticket[]) => {
-        const sorted = data.sort((a: Ticket, b: Ticket) =>
+        const sorted = data.sort((a, b) =>
           (a.name ?? "").localeCompare(b.name ?? "", "ko")
         );
         setTickets(sorted);
@@ -83,6 +90,11 @@ export default function AdminPage() {
     setTickets((prev) =>
       prev.map((t) => (t.id === id ? { ...t, status: "refunded" } : t))
     );
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAdmin");
+    window.location.reload();
   };
 
   const filteredTickets = tickets.filter((ticket) => {
@@ -115,6 +127,7 @@ export default function AdminPage() {
           <option value="cancelled">취소됨</option>
           <option value="refunded">환불 완료</option>
         </select>
+        <button onClick={handleLogout}>🚪 로그아웃</button>
       </div>
 
       <table>
