@@ -112,7 +112,7 @@ export const requestConfirmTicket = async (req: Request, res: Response) => {
     const ticket = rows[0];
 
     // ✅ 텔레그램 알림 전송
-    const message = `📩 *입금 확인 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    const message = `📩 *입금 확인 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
     await sendTelegram(message);
 
     res.status(200).json({ message: "송금 요청 상태로 변경됨" });
@@ -149,7 +149,7 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
     const ticket = rows[0];
 
     // ✅ 텔레그램 알림 전송
-    const message = `💸 *환불 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 요청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    const message = `💸 *환불 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
     await sendTelegram(message);
 
     return res.status(200).json({ message: "환불 요청됨" });
@@ -238,7 +238,7 @@ export const confirmTicketByAdmin = async (req: Request, res: Response) => {
     const ticket = rows[0];
 
     // ✅ 텔레그램 알림 전송
-    const message = `🎉 *예약 최종 완료*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    const message = `🎉 *예약 최종 완료*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
     await sendTelegram(message);
 
     res.status(200).json({ message: "입금 확인 완료" });
@@ -271,7 +271,7 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
     const ticket = rows[0];
 
     // ✅ 텔레그램 알림 전송
-    const message = `✅ *환불 완료 처리됨*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 요청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    const message = `✅ *환불 완료 처리됨*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
     await sendTelegram(message);
 
     res.status(200).json({ message: "환불 완료 처리되었습니다." });
