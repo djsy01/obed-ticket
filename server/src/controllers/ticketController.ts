@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { db } from "../db/index";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { v4 as uuidv4 } from "uuid";
+import { sendTelegram } from "../utils/sendTelegram";
 
 // ✅ 티켓 신청
 export const applyTicket = async (req: Request, res: Response) => {
@@ -103,6 +104,17 @@ export const requestConfirmTicket = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "해당 티켓 없음" });
     }
 
+    // ✅ 티켓 상세 정보 조회
+    const [rows] = await db.execute<RowDataPacket[]>(
+      "SELECT * FROM tickets WHERE id = ?",
+      [id]
+    );
+    const ticket = rows[0];
+
+    // ✅ 텔레그램 알림 전송
+    const message = `📩 *입금 확인 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    await sendTelegram(message);
+
     res.status(200).json({ message: "송금 요청 상태로 변경됨" });
   } catch (err) {
     console.error("❌ requestConfirmTicket 오류:", err);
@@ -124,9 +136,22 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
       "UPDATE tickets SET status = 'refund_requested', refund_account = ? WHERE id = ?",
       [refundAccount, id]
     );
+
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "티켓 없음" });
     }
+
+    // ✅ 티켓 정보 조회
+    const [rows] = await db.execute<RowDataPacket[]>(
+      "SELECT * FROM tickets WHERE id = ?",
+      [id]
+    );
+    const ticket = rows[0];
+
+    // ✅ 텔레그램 알림 전송
+    const message = `💸 *환불 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 요청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    await sendTelegram(message);
+
     return res.status(200).json({ message: "환불 요청됨" });
   } catch (err) {
     console.error("❌ 환불 요청 실패:", err);
@@ -205,6 +230,17 @@ export const confirmTicketByAdmin = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "해당 티켓을 찾을 수 없습니다." });
     }
 
+    // ✅ 티켓 정보 조회
+    const [rows] = await db.execute<RowDataPacket[]>(
+      "SELECT * FROM tickets WHERE id = ?",
+      [id]
+    );
+    const ticket = rows[0];
+
+    // ✅ 텔레그램 알림 전송
+    const message = `🎉 *예약 최종 완료*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    await sendTelegram(message);
+
     res.status(200).json({ message: "입금 확인 완료" });
   } catch (error) {
     console.error("❌ 관리자 입금 확인 실패:", error);
@@ -217,6 +253,7 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
+    // 상태 변경
     const [result] = await db.execute<ResultSetHeader>(
       "UPDATE tickets SET status = 'cancelled' WHERE id = ? AND status = 'refund_requested'",
       [id]
@@ -226,9 +263,21 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "환불 요청 상태의 티켓이 없습니다." });
     }
 
+    // ✅ 환불 티켓 정보 조회
+    const [rows] = await db.execute<RowDataPacket[]>(
+      "SELECT * FROM tickets WHERE id = ?",
+      [id]
+    );
+    const ticket = rows[0];
+
+    // ✅ 텔레그램 알림 전송
+    const message = `✅ *환불 완료 처리됨*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 요청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR")}`;
+    await sendTelegram(message);
+
     res.status(200).json({ message: "환불 완료 처리되었습니다." });
   } catch (err) {
     console.error("❌ confirmRefundByAdmin 오류:", err);
     res.status(500).json({ message: "환불 처리 실패" });
   }
 };
+
