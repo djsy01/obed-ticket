@@ -284,7 +284,6 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
 };
 
 // ✅ QR 코드 생성 (티켓 코드로)
-
 export const confirmTicketWithQR = async (req: Request, res: Response) => {
   const ticketId = Number(req.params.id);
 
@@ -294,25 +293,39 @@ export const confirmTicketWithQR = async (req: Request, res: Response) => {
 
     if (!ticket) return res.status(404).json({ error: "티켓 없음" });
 
-    // ✅ 1. QR 생성
+    // ✅ 이미 QR이 존재하면 이메일만 재전송하고 종료
+    if (ticket.qr_url) {
+      await sendTicketEmail(ticket.email, ticket.name, ticket.qr_url);
+      return res.status(200).json({ message: "✅ 이미 QR이 존재하여 이메일만 재전송됨" });
+    }
+
+    // ✅ QR 생성
     const qrData = `https://obed-ticket.vercel.app/verify/${ticket.id}`;
     const qrImage = await generateQRCode(qrData);
 
-    // ✅ 2. DB 저장
-    await db.query(
-      "UPDATE tickets SET status = 'confirmed', qr_url = ? WHERE id = ?",
-      [qrImage, ticketId]
-    );
+    // ✅ 상태가 아직 confirmed가 아니면 같이 변경
+    if (ticket.status !== "confirmed") {
+      await db.query(
+        "UPDATE tickets SET status = 'confirmed', qr_url = ? WHERE id = ?",
+        [qrImage, ticketId]
+      );
+    } else {
+      await db.query(
+        "UPDATE tickets SET qr_url = ? WHERE id = ?",
+        [qrImage, ticketId]
+      );
+    }
 
-    // ✅ 3. 이메일 전송
-    await sendTicketEmail(ticket.email, ticket.name, qrImage); // ⬅ 여기가 핵심
+    // ✅ 이메일 전송
+    await sendTicketEmail(ticket.email, ticket.name, qrImage);
 
-    res.json({ success: true });
+    res.status(200).json({ message: "✅ QR 생성 및 이메일 전송 완료" });
   } catch (err) {
-    console.error("QR 처리 중 오류:", err);
+    console.error("❌ QR 처리 중 오류:", err);
     res.status(500).json({ error: "서버 오류" });
   }
 };
+
 
 // ✅ QR 스캔 후 입장 검증용
 export const verifyTicket = async (req: Request, res: Response) => {
