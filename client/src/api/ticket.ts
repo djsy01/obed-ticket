@@ -81,3 +81,9 @@ export const requestRefundConfirmByAdmin = async (ticketId: number) => {
   const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/confirm-refund`);
   return res.data;
 };
+
+// ✅ QR 생성 + 이메일 발송 API
+export const generateQRAndSendEmail = async (ticketId: number) => {
+  const res = await axios.post(`${BASE_URL}/api/tickets/${ticketId}/confirm-qr`);
+  return res.data;
+};
