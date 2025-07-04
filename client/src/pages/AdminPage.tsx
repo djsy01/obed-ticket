@@ -43,6 +43,8 @@ export default function AdminPage() {
   const [searchText, setSearchText] = useState("");
   const [filter, setFilter] = useState("all");
   const [authorized, setAuthorized] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ticketsPerPage = 10;
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -104,6 +106,13 @@ export default function AdminPage() {
     return keywordMatch && filterMatch;
   });
 
+  const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
+  const startIndex = (currentPage - 1) * ticketsPerPage;
+  const paginatedTickets = filteredTickets.slice(
+    startIndex,
+    startIndex + ticketsPerPage
+  );
+
   if (!authorized) return null;
   if (loading) return <p>로딩 중...</p>;
 
@@ -116,9 +125,18 @@ export default function AdminPage() {
           type="text"
           placeholder="이름 또는 전화번호 검색"
           value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
+          onChange={(e) => {
+            setSearchText(e.target.value);
+            setCurrentPage(1);
+          }}
         />
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+        <select
+          value={filter}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+        >
           <option value="all">전체</option>
           <option value="pending">입금 대기</option>
           <option value="requested">입금 확인 중</option>
@@ -145,7 +163,7 @@ export default function AdminPage() {
           </tr>
         </thead>
         <tbody>
-          {filteredTickets.map((t) => (
+          {paginatedTickets.map((t) => (
             <tr key={t.id}>
               <td>{t.id}</td>
               <td>{t.name}</td>
@@ -167,6 +185,40 @@ export default function AdminPage() {
           ))}
         </tbody>
       </table>
+
+      {filteredTickets.length === 0 && (
+        <p style={{ textAlign: "center", marginTop: "1rem" }}>
+          검색 결과가 없습니다.
+        </p>
+      )}
+
+      {filteredTickets.length > 0 && (
+        <div className="pagination">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => prev - 1)}
+          >
+            ◀ 이전
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              className={currentPage === i + 1 ? "active" : ""}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => prev + 1)}
+          >
+            다음 ▶
+          </button>
+        </div>
+      )}
     </div>
   );
 }
