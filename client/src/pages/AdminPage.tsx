@@ -6,6 +6,7 @@ import {
 } from "../api/ticket";
 import "../styles/AdminPage.css";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 type Ticket = {
   id: number;
@@ -16,6 +17,7 @@ type Ticket = {
   status: string;
   refund_account?: string;
   created_at: string;
+  qr_url?: string;
 };
 
 const getStatusLabel = (status: string) => {
@@ -81,10 +83,21 @@ export default function AdminPage() {
   }, [authorized]);
 
   const handleConfirm = async (id: number) => {
-    await requestConfirmByAdmin(id);
-    setTickets((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, status: "confirmed" } : t))
-    );
+    try {
+      await requestConfirmByAdmin(id); // 1. 입금 확인
+      await axios.post(`/api/tickets/${id}/confirm-qr`); // 2. QR 생성 및 이메일 발송
+
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === id ? { ...t, status: "confirmed" } : t
+        )
+      );
+
+      alert("✅ 입금 확인 + QR 이메일 발송 완료!");
+    } catch (err) {
+      console.error("❌ 입금 처리 중 오류:", err);
+      alert("❌ 입금 처리 또는 QR 이메일 발송 실패");
+    }
   };
 
   const handleRefund = async (id: number) => {
