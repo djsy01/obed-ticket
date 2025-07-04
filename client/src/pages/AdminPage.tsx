@@ -3,10 +3,10 @@ import {
   getAllTickets,
   requestConfirmByAdmin,
   requestRefundConfirmByAdmin,
+  generateQRAndSendEmail, // ✅ QR 함수 추가
 } from "../api/ticket";
 import "../styles/AdminPage.css";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 
 type Ticket = {
   id: number;
@@ -85,12 +85,10 @@ export default function AdminPage() {
   const handleConfirm = async (id: number) => {
     try {
       await requestConfirmByAdmin(id); // 1. 입금 확인
-      await axios.post(`/api/tickets/${id}/confirm-qr`); // 2. QR 생성 및 이메일 발송
+      await generateQRAndSendEmail(id); // 2. QR 생성 + 이메일 전송
 
       setTickets((prev) =>
-        prev.map((t) =>
-          t.id === id ? { ...t, status: "confirmed" } : t
-        )
+        prev.map((t) => (t.id === id ? { ...t, status: "confirmed" } : t))
       );
 
       alert("✅ 입금 확인 + QR 이메일 발송 완료!");
