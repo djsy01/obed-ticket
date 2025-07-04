@@ -3,6 +3,8 @@ import { db } from "../db/index";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
 import { v4 as uuidv4 } from "uuid";
 import { sendTelegram } from "../utils/sendTelegram";
+import { generateQRCode } from "../utils/qrcode";
+import { sendTicketEmail } from "../utils/sendEmail";
 
 // ✅ 티켓 신청
 export const applyTicket = async (req: Request, res: Response) => {
@@ -281,3 +283,66 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
   }
 };
 
+// ✅ QR 코드 생성 (티켓 코드로)
+
+export const confirmTicketWithQR = async (req: Request, res: Response) => {
+  const ticketId = Number(req.params.id);
+
+  try {
+    const [rows] = await db.query("SELECT * FROM tickets WHERE id = ?", [ticketId]);
+    const ticket = rows[0];
+
+    if (!ticket) return res.status(404).json({ error: "티켓 없음" });
+
+    // ✅ 1. QR 생성
+    const qrData = `https://obed-ticket.vercel.app/verify/${ticket.id}`;
+    const qrImage = await generateQRCode(qrData);
+
+    // ✅ 2. DB 저장
+    await db.query(
+      "UPDATE tickets SET status = 'confirmed', qr_url = ? WHERE id = ?",
+      [qrImage, ticketId]
+    );
+
+    // ✅ 3. 이메일 전송
+    await sendTicketEmail(ticket.email, ticket.name, qrImage); // ⬅ 여기가 핵심
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("QR 처리 중 오류:", err);
+    res.status(500).json({ error: "서버 오류" });
+  }
+};
+
+// ✅ QR 스캔 후 입장 검증용
+export const verifyTicket = async (req: Request, res: Response) => {
+  const ticketId = Number(req.params.id);
+
+  try {
+    const [rows] = await db.query<RowDataPacket[]>(
+      "SELECT * FROM tickets WHERE id = ?",
+      [ticketId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "❌ 티켓이 존재하지 않습니다." });
+    }
+
+    const ticket = rows[0];
+
+    if (ticket.status !== "confirmed") {
+      return res.status(400).json({ message: "❌ 유효하지 않은 티켓입니다." });
+    }
+
+    res.status(200).json({
+      message: "✅ 유효한 티켓입니다.",
+      name: ticket.name,
+      ticketType: ticket.ticket_type,
+      quantity: ticket.quantity,
+      createdAt: ticket.created_at,
+    });
+  } catch (err) {
+    console.error("❌ verifyTicket 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+};
