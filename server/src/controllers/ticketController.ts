@@ -290,7 +290,7 @@ export const confirmTicketWithQR = async (req: Request, res: Response) => {
 
   try {
     const [rows] = await db.query("SELECT * FROM tickets WHERE id = ?", [ticketId]);
-    const ticket = rows[0];
+    const ticket = (rows as RowDataPacket[])[0];
 
     if (!ticket) return res.status(404).json({ error: "티켓 없음" });
 
