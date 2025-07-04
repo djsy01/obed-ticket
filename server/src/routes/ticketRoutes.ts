@@ -7,7 +7,9 @@ import {
   requestDeleteTicket,
   getAllTickets,
   confirmTicketByAdmin,
-  confirmRefundByAdmin
+  confirmRefundByAdmin,
+  confirmTicketWithQR,
+  verifyTicket
 } from "../controllers/ticketController";
 
 const router = Router();
@@ -40,5 +42,11 @@ router.patch("/:id/confirm", confirmTicketByAdmin);
 
 // ✅ 관리자: 환불 상태 확인
 router.patch("/:id/confirm-refund", confirmRefundByAdmin);
+
+// ✅ QR 코드로 티켓 확인
+router.post("/:id/confirm-qr", confirmTicketWithQR);
+
+// ✅ QR 스캔 후 티켓 검증
+router.get("/verify/:id", verifyTicket);
 
 export default router;
