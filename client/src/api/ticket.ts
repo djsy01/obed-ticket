@@ -16,39 +16,36 @@ interface ApplyTicketResponse {
 }
 
 export const applyTicket = async (
+  eventId: number,
   data: ApplyTicketParams
 ): Promise<ApplyTicketResponse> => {
-  const res = await axios.post(`${BASE_URL}/api/tickets`, data);
+  const res = await axios.post(`${BASE_URL}/api/events/${eventId}/tickets`, data);
   console.log("🔥 BASE_URL:", BASE_URL);
   return res.data;
 };
 
-export const getTicketStatus = async (id: string) => {
-  const res = await axios.get(`${BASE_URL}/api/tickets/${id}`);
-  return res.data;
-};
-
+// ✅ 모든 이벤트를 대상으로 티켓을 검색하는 함수로 수정
 export const searchTicketByNamePhone = async (name: string, phone: string) => {
-  const res = await axios.get(`${BASE_URL}/api/tickets/search`, {
+  const res = await axios.get(`${BASE_URL}/api/events/find`, {
     params: { name, phone },
   });
   return res.data;
 };
 
-// ✅ 송금 요청 API (status: 'refund_confirm')
-export const requestConfirm = async (ticketId: number) => {
-  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-confirm`);
+// ✅ 송금 요청 API (status: 'refund_confirm') - eventId 파라미터 추가
+export const requestConfirm = async (eventId: number, ticketId: number) => {
+  const res = await axios.patch(`${BASE_URL}/api/events/${eventId}/tickets/${ticketId}/request-confirm`);
   return res.data;
 };
 
-// ✅ 환불 요청 API (status: 'refund_requested')
-export const requestRefund = async (id: number, refundAccount: string) => {
+// ✅ 환불 요청 API (status: 'refund_requested') - eventId 파라미터 추가
+export const requestRefund = async (eventId: number, id: number, refundAccount: string) => {
   const res = await axios.patch(
-    `${BASE_URL}/api/tickets/${id}/request-refund`,
+    `${BASE_URL}/api/events/${eventId}/tickets/${id}/request-refund`,
     { refundAccount },
     {
       headers: {
-        "Content-Type": "application/json", // ✅ 명시적으로 선언!
+        "Content-Type": "application/json",
       },
     }
   );
@@ -56,34 +53,40 @@ export const requestRefund = async (id: number, refundAccount: string) => {
   return res.data;
 };
 
-// ✅ 예약 취소 API (status: 'delete')
-export const requestDelete = async (ticketId: number, refundAccount: string) => {
-  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/request-delete`, {
+// ✅ 예약 취소 API (status: 'delete') - eventId 파라미터 추가
+export const requestDelete = async (eventId: number, ticketId: number, refundAccount: string) => {
+  const res = await axios.patch(`${BASE_URL}/api/events/${eventId}/tickets/${ticketId}/request-delete`, {
     refundAccount,
   });
   return res.data;
 };
 
-// ✅ 관리자: 모든 티켓 조회
-export const getAllTickets = async () => {
-  const res = await axios.get(`${BASE_URL}/api/tickets/all`);
+// ✅ 관리자: 모든 티켓 조회 - eventId 파라미터 추가
+export const getAllTickets = async (eventId: number) => {
+  const res = await axios.get(`${BASE_URL}/api/events/${eventId}/tickets/all`);
   return res.data;
 };
 
-// ✅ 관리자: 티켓 상태 확인 (입금 확인)
-export const requestConfirmByAdmin = async (ticketId: number) => {
-  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/confirm`);
+// ✅ 관리자: 티켓 상태 확인 (입금 확인) - eventId 파라미터 추가
+export const requestConfirmByAdmin = async (eventId: number, ticketId: number) => {
+  const res = await axios.patch(`${BASE_URL}/api/events/${eventId}/tickets/${ticketId}/confirm`);
   return res.data;
 };
 
-// ✅ 관리자: 환불 상태 확인
-export const requestRefundConfirmByAdmin = async (ticketId: number) => {
-  const res = await axios.patch(`${BASE_URL}/api/tickets/${ticketId}/confirm-refund`);
+// ✅ 관리자: 환불 상태 확인 - eventId 파라미터 추가
+export const requestRefundConfirmByAdmin = async (eventId: number, ticketId: number) => {
+  const res = await axios.patch(`${BASE_URL}/api/events/${eventId}/tickets/${ticketId}/confirm-refund`);
   return res.data;
 };
 
-// ✅ QR 생성 + 이메일 발송 API
-export const generateQRAndSendEmail = async (ticketId: number) => {
-  const res = await axios.post(`${BASE_URL}/api/tickets/${ticketId}/confirm-qr`);
+// ✅ QR 생성 + 이메일 발송 API - eventId 파라미터 추가
+export const generateQRAndSendEmail = async (eventId: number, ticketId: number) => {
+  const res = await axios.post(`${BASE_URL}/api/events/${eventId}/tickets/${ticketId}/confirm-qr`);
+  return res.data;
+};
+
+// ✅ QR 스캔 검증 - eventId 파라미터 추가
+export const verifyTicket = async (eventId: number, id: string) => {
+  const res = await axios.get(`${BASE_URL}/api/events/${eventId}/tickets/verify/${id}`);
   return res.data;
 };

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { applyTicket } from "../api/ticket";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "../styles/TicketForm.css";
 
 export default function TicketForm() {
@@ -11,6 +11,7 @@ export default function TicketForm() {
   const [quantity, setQuantity] = useState(1);
   const [memo, setMemo] = useState("");
 
+  const { eventId } = useParams();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,13 +22,18 @@ export default function TicketForm() {
       return;
     }
 
+    if (!eventId) {
+      alert("이벤트 ID가 누락되었습니다.");
+      return;
+    }
+
     try {
       const data = { name, email, phone, ticketType, quantity, memo };
-      await applyTicket(data);
+      await applyTicket(Number(eventId), data);
 
       const encodedName = encodeURIComponent(name);
       const encodedPhone = encodeURIComponent(phone);
-      navigate(`/complete?name=${encodedName}&phone=${encodedPhone}`);
+      navigate(`/complete?eventId=${eventId}&name=${encodedName}&phone=${encodedPhone}`);
     } catch (err) {
       alert("❌ 예매에 실패했습니다.");
       console.error(err);

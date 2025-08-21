@@ -43,12 +43,12 @@ export default function CompletePage() {
     }
   }, [name, phone]);
 
-  const handleConfirmClick = async (ticketId: number) => {
+  const handleConfirmClick = async (ticket: any) => {
     try {
-      await requestConfirm(ticketId);
+      await requestConfirm(ticket.event_id, ticket.id);
       setTickets((prev) =>
         prev.map((t) =>
-          t.id === ticketId ? { ...t, status: "requested" } : t
+          t.id === ticket.id ? { ...t, status: "requested" } : t
         )
       );
     } catch (err) {
@@ -58,14 +58,14 @@ export default function CompletePage() {
   };
 
   const handleCancelClick = async (ticket: any) => {
-    const { id, name, phone, ticket_type, quantity, status } = ticket;
+    const { id, name, phone, ticket_type, quantity, status, event_id } = ticket;
 
     if (status === "pending") {
       const ok = confirm("정말 예약을 취소하시겠습니까?");
       if (!ok) return;
 
       try {
-        await requestDelete(id, "");
+        await requestDelete(event_id, id, "");
         alert("예약이 취소되었습니다.");
         setTickets((prev) => prev.filter((t) => t.id !== id));
       } catch (err) {
@@ -75,6 +75,7 @@ export default function CompletePage() {
     } else if (status === "requested" || status === "confirmed") {
       navigate("/refund", {
         state: {
+          eventId: event_id,
           name,
           phone,
           ticketId: id,
@@ -105,6 +106,9 @@ export default function CompletePage() {
 
         return (
           <div key={ticket.id} className="ticket-box">
+            <p><strong>행사:</strong> {ticket.event_title}</p>
+            <p><strong>날짜:</strong> {new Date(ticket.event_date).toLocaleDateString()}</p>
+            <hr/>
             <p><strong>이름:</strong> {ticket.name}</p>
             <p><strong>전화번호:</strong> {ticket.phone}</p>
             <p><strong>티켓 종류:</strong> {getTicketTypeLabel(ticket.ticket_type)}</p>
@@ -126,7 +130,7 @@ export default function CompletePage() {
             {!isConfirmed && !isConfirming && (
               <button
                 className="confirm-btn"
-                onClick={() => handleConfirmClick(ticket.id)}
+                onClick={() => handleConfirmClick(ticket)}
               >
                 송금 완료
               </button>
@@ -144,8 +148,6 @@ export default function CompletePage() {
             >
               ❌ 예약 취소
             </button>
-
-            <hr />
           </div>
         );
       })}
