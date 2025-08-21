@@ -16,7 +16,7 @@ export default function RefundPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const refundMode = location.state?.refundMode ?? "refund";
 
-  const eventId = location.state?.eventId; // ✅ eventId 가져오기
+  const eventId = location.state?.eventId;
 
   useEffect(() => {
     if (!location.state) {
@@ -42,9 +42,9 @@ export default function RefundPage() {
     setIsSubmitting(true);
     try {
       if (refundMode === "refund") {
-        await requestRefund(eventId, ticket.ticketId, accountInput); // ✅ eventId 인자 추가
+        await requestRefund(eventId, ticket.ticketId, accountInput);
       } else if (refundMode === "cancel") {
-        await requestDelete(eventId, ticket.ticketId, accountInput); // ✅ eventId 인자 추가
+        await requestDelete(eventId, ticket.ticketId, accountInput);
       }
       alert("요청이 완료되었습니다.");
       navigate("/");

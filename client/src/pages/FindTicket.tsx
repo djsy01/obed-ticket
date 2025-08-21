@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { searchTicketByNamePhone } from "../api/ticket";
 import "../styles/FindTicket.css";
 
@@ -7,16 +7,20 @@ export default function FindTicket() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const { eventId } = useParams();
   const navigate = useNavigate();
-
-  const eventId = 1; // ✅ 이벤트 ID를 직접 입력
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    if (!eventId) {
+      setError("이벤트 ID가 누락되었습니다.");
+      return;
+    }
+
     try {
-      const res = await searchTicketByNamePhone(eventId, name, phone); // ✅ eventId 인자 추가
+      const res = await searchTicketByNamePhone(Number(eventId), name, phone);
 
       if (res) {
         navigate(`/complete?eventId=${eventId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`);

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { applyTicket } from "../api/ticket";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import "../styles/TicketForm.css";
 
 export default function TicketForm() {
@@ -10,8 +10,8 @@ export default function TicketForm() {
   const [ticketType, setTicketType] = useState<"" | "student" | "adult">("");
   const [quantity, setQuantity] = useState(1);
   const [memo, setMemo] = useState("");
-  const eventId = 1; // ✅ 여기에 이벤트 ID를 직접 입력
 
+  const { eventId } = useParams();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -22,13 +22,17 @@ export default function TicketForm() {
       return;
     }
 
+    if (!eventId) {
+      alert("이벤트 ID가 누락되었습니다.");
+      return;
+    }
+
     try {
       const data = { name, email, phone, ticketType, quantity, memo };
-      await applyTicket(eventId, data); // ✅ eventId 인자 추가
+      await applyTicket(Number(eventId), data);
 
       const encodedName = encodeURIComponent(name);
       const encodedPhone = encodeURIComponent(phone);
-      // ✅ `complete` 페이지로 이동할 때도 eventId를 쿼리 파라미터로 전달해야 합니다.
       navigate(`/complete?eventId=${eventId}&name=${encodedName}&phone=${encodedPhone}`);
     } catch (err) {
       alert("❌ 예매에 실패했습니다.");

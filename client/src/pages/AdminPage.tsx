@@ -5,8 +5,9 @@ import {
   requestRefundConfirmByAdmin,
   generateQRAndSendEmail,
 } from "../api/ticket";
+import { createEvent, listEvents } from "../api/event";
 import "../styles/AdminPage.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 type Ticket = {
   id: number;
@@ -49,7 +50,15 @@ export default function AdminPage() {
   const ticketsPerPage = 10;
   const navigate = useNavigate();
 
-  const eventId = 1; // ✅ 관리자 페이지에서 관리할 이벤트 ID
+  const [events, setEvents] = useState([]);
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    date: "",
+    location: "",
+    description: "",
+  });
+
+  const { eventId } = useParams(); // ✅ URL에서 eventId 가져오기
 
   useEffect(() => {
     const adminKey = import.meta.env.VITE_ADMIN_SECRET;
@@ -72,8 +81,14 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authorized) return;
+    listEvents()
+      .then((data) => setEvents(data))
+      .catch(() => alert("행사 목록 조회 실패"));
+  }, [authorized]);
 
-    getAllTickets(eventId) // ✅ eventId 인자 추가
+  useEffect(() => {
+    if (!authorized || !eventId) return;
+    getAllTickets(Number(eventId))
       .then((data: Ticket[]) => {
         const sorted = data.sort((a, b) =>
           (a.name ?? "").localeCompare(b.name ?? "", "ko")
@@ -86,8 +101,8 @@ export default function AdminPage() {
 
   const handleConfirm = async (id: number) => {
     try {
-      await requestConfirmByAdmin(eventId, id); // ✅ eventId 인자 추가
-      await generateQRAndSendEmail(eventId, id); // ✅ eventId 인자 추가
+      await requestConfirmByAdmin(Number(eventId), id);
+      await generateQRAndSendEmail(Number(eventId), id);
 
       setTickets((prev) =>
         prev.map((t) => (t.id === id ? { ...t, status: "confirmed" } : t))
@@ -101,10 +116,31 @@ export default function AdminPage() {
   };
 
   const handleRefund = async (id: number) => {
-    await requestRefundConfirmByAdmin(eventId, id); // ✅ eventId 인자 추가
+    await requestRefundConfirmByAdmin(Number(eventId), id);
     setTickets((prev) =>
       prev.map((t) => (t.id === id ? { ...t, status: "refunded" } : t))
     );
+  };
+
+  const handleCreateEvent = async () => {
+    try {
+      if (!newEvent.title || !newEvent.date) {
+        alert("행사 제목과 날짜는 필수 입력 항목입니다.");
+        return;
+      }
+      await createEvent(newEvent);
+      alert("✅ 새 행사가 생성되었습니다!");
+      setNewEvent({
+        title: "",
+        date: "",
+        location: "",
+        description: "",
+      });
+      listEvents().then((data) => setEvents(data));
+    } catch (err) {
+      console.error("❌ 행사 생성 실패:", err);
+      alert("❌ 행사 생성에 실패했습니다.");
+    }
   };
 
   const handleLogout = () => {
@@ -132,34 +168,57 @@ export default function AdminPage() {
   return (
     <div className="admin-container">
       <h2>🎫 관리자 페이지</h2>
+      <button onClick={handleLogout}>🚪 로그아웃</button>
 
-      <div className="filter-bar">
+      <div className="event-creation-section">
+        <h3>➕ 새 행사 만들기</h3>
+        <label>제목</label>
         <input
-          type="text"
-          placeholder="이름 또는 전화번호 검색"
-          value={searchText}
-          onChange={(e) => {
-            setSearchText(e.target.value);
-            setCurrentPage(1);
-          }}
+          value={newEvent.title}
+          onChange={(e) =>
+            setNewEvent({ ...newEvent, title: e.target.value })
+          }
         />
-        <select
-          value={filter}
-          onChange={(e) => {
-            setFilter(e.target.value);
-            setCurrentPage(1);
-          }}
-        >
-          <option value="all">전체</option>
-          <option value="pending">입금 대기</option>
-          <option value="requested">입금 확인 중</option>
-          <option value="confirmed">입금 완료</option>
-          <option value="refund_requested">환불 요청됨</option>
-          <option value="cancelled">취소됨</option>
-          <option value="refunded">환불 완료</option>
-        </select>
-        <button onClick={handleLogout}>🚪 로그아웃</button>
+        <label>날짜</label>
+        <input
+          type="date"
+          value={newEvent.date}
+          onChange={(e) =>
+            setNewEvent({ ...newEvent, date: e.target.value })
+          }
+        />
+        <label>장소</label>
+        <input
+          value={newEvent.location}
+          onChange={(e) =>
+            setNewEvent({ ...newEvent, location: e.target.value })
+          }
+        />
+        <label>설명</label>
+        <textarea
+          value={newEvent.description}
+          onChange={(e) =>
+            setNewEvent({ ...newEvent, description: e.target.value })
+          }
+        />
+        <button onClick={handleCreateEvent}>생성</button>
       </div>
+
+      <hr style={{ margin: "2rem 0" }} />
+
+      <h3>🎉 현재 진행 중인 행사</h3>
+      <ul>
+        {events.map((event: any) => (
+          <li key={event.id}>
+            <strong>{event.title}</strong> ({new Date(event.date).toLocaleDateString()}) -{" "}
+            <a href={`/admin/${event.id}`}>티켓 관리하기</a>
+          </li>
+        ))}
+      </ul>
+
+      <hr style={{ margin: "2rem 0" }} />
+
+      <h3>🎫 티켓 목록 (이벤트 ID: {eventId})</h3>
 
       <table>
         <thead>

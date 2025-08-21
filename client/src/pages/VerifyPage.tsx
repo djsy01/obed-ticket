@@ -11,17 +11,15 @@ type Ticket = {
 };
 
 export default function VerifyPage() {
-  const { id } = useParams<{ id: string }>();
+  const { eventId, id } = useParams<{ eventId: string; id: string }>();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const eventId = 1; // ✅ 이벤트 ID를 직접 입력
 
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        if (id) {
-          const res = await verifyTicket(eventId, id); // ✅ eventId 인자 추가
+        if (id && eventId) {
+          const res = await verifyTicket(Number(eventId), id);
           setTicket(res.name);
         }
       } catch (err) {
@@ -30,7 +28,7 @@ export default function VerifyPage() {
       }
     };
 
-    if (id) fetchTicket();
+    if (id && eventId) fetchTicket();
   }, [id, eventId]);
 
   const formatDate = (dateString: string) => {
