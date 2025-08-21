@@ -132,9 +132,9 @@ export default function AdminTicketsPage() {
   return (
     <div className="admin-container">
       <h2>🎫 티켓 목록 (이벤트 ID: {eventId})</h2>
-      <button onClick={handleLogout}>🚪 로그아웃</button>
       <button onClick={() => navigate("/admin")}>🏠 홈으로</button>
-
+      <button onClick={handleLogout}>🚪 로그아웃</button>
+      
       <div className="filter-bar">
         <input
           type="text"

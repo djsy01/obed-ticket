@@ -15,7 +15,7 @@ async function getEventTitle(eventId: number): Promise<string | null> {
 
 // ✅ 티켓 신청 (행사 하위)
 export const applyTicket = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
+  const eventId = Number(req.params.id);
   console.log("📥 티켓 신청 요청:", { eventId, ...req.body });
 
   const { name, email, ticketType, phone, quantity = 1, memo = null } = req.body;
@@ -48,7 +48,7 @@ export const applyTicket = async (req: Request, res: Response) => {
 // ✅ 이름 + 전화번호 조회 (행사 한정)
 export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
   try {
-    const eventId = Number(req.params.id); // ★ 추가
+    const eventId = Number(req.params.id);
     const name = decodeURIComponent(String(req.query.name));
     const phone = decodeURIComponent(String(req.query.phone));
 
@@ -74,9 +74,39 @@ export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
   }
 };
 
+// ✅ 이름 + 전화번호로 모든 행사 티켓 조회 (전역)
+export const getTicketsForUser = async (req: Request, res: Response) => {
+  try {
+    const name = decodeURIComponent(String(req.query.name));
+    const phone = decodeURIComponent(String(req.query.phone));
+
+    if (!name || !phone) {
+      return res.status(400).json({ message: "이름과 전화번호는 필수입니다." });
+    }
+
+    const [rows] = await db.execute<RowDataPacket[]>(
+      `SELECT t.*, e.title AS event_title, e.date AS event_date
+       FROM tickets t
+       JOIN events e ON t.event_id = e.id
+       WHERE t.name = ? AND t.phone = ? AND t.status != 'cancelled'
+       ORDER BY e.date DESC`,
+      [name, phone]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "유효한 티켓이 없습니다." });
+    }
+
+    res.status(200).json(rows);
+  } catch (err) {
+    console.error("❌ getTicketsForUser 오류:", err);
+    res.status(500).json({ message: "DB 오류" });
+  }
+};
+
 // ✅ 입금 확인 (행사 한정)
 export const confirmTicket = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
+  const eventId = Number(req.params.id);
   const { id } = req.params;
 
   try {
@@ -98,13 +128,13 @@ export const confirmTicket = async (req: Request, res: Response) => {
 
 // ✅ 송금 확인 요청 (행사 한정)
 export const requestConfirmTicket = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
-  const { id } = req.params;
+  const eventId = Number(req.params.id);
+  const { ticketId } = req.params;
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
       "UPDATE tickets SET status = 'requested' WHERE id = ? AND event_id = ?",
-      [id, eventId]
+      [ticketId, eventId]
     );
 
     if (result.affectedRows === 0) {
@@ -113,7 +143,7 @@ export const requestConfirmTicket = async (req: Request, res: Response) => {
 
     const [rows] = await db.execute<RowDataPacket[]>(
       "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
-      [id, eventId]
+      [ticketId, eventId]
     );
     const ticket = rows[0];
     const title = await getEventTitle(eventId);
@@ -134,8 +164,8 @@ export const requestConfirmTicket = async (req: Request, res: Response) => {
 
 // ✅ 환불 요청 (행사 한정)
 export const requestRefundTicket = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
-  const { id } = req.params;
+  const eventId = Number(req.params.id);
+  const { ticketId } = req.params;
   const { refundAccount } = req.body;
 
   if (!refundAccount) {
@@ -145,7 +175,7 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
   try {
     const [result] = await db.execute<ResultSetHeader>(
       "UPDATE tickets SET status = 'refund_requested', refund_account = ? WHERE id = ? AND event_id = ?",
-      [refundAccount, id, eventId]
+      [refundAccount, ticketId, eventId]
     );
 
     if (result.affectedRows === 0) {
@@ -154,7 +184,7 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
 
     const [rows] = await db.execute<RowDataPacket[]>(
       "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
-      [id, eventId]
+      [ticketId, eventId]
     );
     const ticket = rows[0];
     const title = await getEventTitle(eventId);
@@ -176,14 +206,14 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
 
 // ✅ 예약 취소 (행사 한정)
 export const requestDeleteTicket = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
-  const { id } = req.params;
+  const eventId = Number(req.params.id);
+  const { ticketId } = req.params;
   const { refundAccount } = req.body;
 
   try {
     const [rows] = await db.execute<RowDataPacket[]>(
       "SELECT status FROM tickets WHERE id = ? AND event_id = ?",
-      [id, eventId]
+      [ticketId, eventId]
     );
 
     if (rows.length === 0) {
@@ -195,7 +225,7 @@ export const requestDeleteTicket = async (req: Request, res: Response) => {
     if (currentStatus === "pending") {
       await db.execute<ResultSetHeader>(
         "UPDATE tickets SET status = 'cancelled' WHERE id = ? AND event_id = ?",
-        [id, eventId]
+        [ticketId, eventId]
       );
     } else {
       if (!refundAccount) {
@@ -203,7 +233,7 @@ export const requestDeleteTicket = async (req: Request, res: Response) => {
       }
       await db.execute<ResultSetHeader>(
         "UPDATE tickets SET status = 'cancelled', refund_account = ? WHERE id = ? AND event_id = ?",
-        [refundAccount, id, eventId]
+        [refundAccount, ticketId, eventId]
       );
     }
 
@@ -217,7 +247,7 @@ export const requestDeleteTicket = async (req: Request, res: Response) => {
 // ✅ 전체 티켓 조회(관리자) — 행사별 목록으로 바꾸는 게 안전
 export const getAllTickets = async (req: Request, res: Response) => {
   try {
-    const eventId = Number(req.params.id); // ★ 추가 (행사별)
+    const eventId = Number(req.params.id);
     const [rows] = await db.query("SELECT * FROM tickets WHERE event_id = ? ORDER BY created_at DESC", [eventId]);
     res.status(200).json(rows);
   } catch (error) {
@@ -228,13 +258,13 @@ export const getAllTickets = async (req: Request, res: Response) => {
 
 // ✅ 관리자: 입금 확인 (행사 한정)
 export const confirmTicketByAdmin = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
-  const { id } = req.params;
+  const eventId = Number(req.params.id);
+  const { ticketId } = req.params;
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
       "UPDATE tickets SET status = 'confirmed' WHERE id = ? AND event_id = ?",
-      [id, eventId]
+      [ticketId, eventId]
     );
 
     if (result.affectedRows === 0) {
@@ -243,7 +273,7 @@ export const confirmTicketByAdmin = async (req: Request, res: Response) => {
 
     const [rows] = await db.execute<RowDataPacket[]>(
       "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
-      [id, eventId]
+      [ticketId, eventId]
     );
     const ticket = rows[0];
     const title = await getEventTitle(eventId);
@@ -264,13 +294,13 @@ export const confirmTicketByAdmin = async (req: Request, res: Response) => {
 
 // ✅ 관리자: 환불 완료 (행사 한정)
 export const confirmRefundByAdmin = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
-  const { id } = req.params;
+  const eventId = Number(req.params.id);
+  const { ticketId } = req.params;
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
       "UPDATE tickets SET status = 'cancelled' WHERE id = ? AND event_id = ? AND status = 'refund_requested'",
-      [id, eventId]
+      [ticketId, eventId]
     );
 
     if (result.affectedRows === 0) {
@@ -279,7 +309,7 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
 
     const [rows] = await db.execute<RowDataPacket[]>(
       "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
-      [id, eventId]
+      [ticketId, eventId]
     );
     const ticket = rows[0];
     const title = await getEventTitle(eventId);
@@ -301,33 +331,37 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
 
 // ✅ QR 생성/메일 발송 (행사 한정)
 export const confirmTicketWithQR = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
+  const eventId = Number(req.params.id);
   const ticketId = Number(req.params.ticketId);
 
   try {
-    const [rows] = await db.query<RowDataPacket[]>(
-      "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
-      [ticketId, eventId]
-    );
-    const ticket = rows[0];
+    const [rows] = await db.query("SELECT * FROM tickets WHERE id = ? AND event_id = ?", [ticketId, eventId]);
+    const ticket = (rows as RowDataPacket[])[0];
+
     if (!ticket) return res.status(404).json({ error: "티켓 없음" });
 
-    // 이미 QR 있으면 이메일 재전송
     if (ticket.qr_url) {
       await sendTicketEmail(ticket.email, ticket.name, ticket.qr_url);
-      return res.status(200).json({ message: "✅ 이미 QR이 있어 이메일만 재전송됨" });
+      return res.status(200).json({ message: "✅ 이미 QR이 존재하여 이메일만 재전송됨" });
     }
 
     const qrData = `https://obed-ticket.vercel.app/verify/${ticket.id}`;
     const qrImage = await generateQRCode(qrData);
 
     if (ticket.status !== "confirmed") {
-      await db.query("UPDATE tickets SET status='confirmed', qr_url=? WHERE id=? AND event_id=?", [qrImage, ticketId, eventId]);
+      await db.query(
+        "UPDATE tickets SET status = 'confirmed', qr_url = ? WHERE id = ? AND event_id = ?",
+        [qrImage, ticketId, eventId]
+      );
     } else {
-      await db.query("UPDATE tickets SET qr_url=? WHERE id=? AND event_id=?", [qrImage, ticketId, eventId]);
+      await db.query(
+        "UPDATE tickets SET qr_url = ? WHERE id = ? AND event_id = ?",
+        [qrImage, ticketId, eventId]
+      );
     }
 
     await sendTicketEmail(ticket.email, ticket.name, qrImage);
+
     res.status(200).json({ message: "✅ QR 생성 및 이메일 전송 완료" });
   } catch (err) {
     console.error("❌ QR 처리 중 오류:", err);
@@ -337,8 +371,8 @@ export const confirmTicketWithQR = async (req: Request, res: Response) => {
 
 // ✅ QR 스캔 검증 (행사 한정)
 export const verifyTicket = async (req: Request, res: Response) => {
-  const eventId = Number(req.params.id); // ★ 추가
-  const ticketId = Number(req.params.ticketId);
+  const eventId = Number(req.params.eventId);
+  const ticketId = Number(req.params.id);
 
   try {
     const [rows] = await db.query<RowDataPacket[]>(
