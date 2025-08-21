@@ -1,3 +1,4 @@
+// server/src/controllers/ticketController.ts
 import { Request, Response } from "express";
 import { db } from "../db/index";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
@@ -6,18 +7,18 @@ import { sendTelegram } from "../utils/sendTelegram";
 import { generateQRCode } from "../utils/qrcode";
 import { sendTicketEmail } from "../utils/sendEmail";
 
-// ✅ 티켓 신청
-export const applyTicket = async (req: Request, res: Response) => {
-  console.log("📥 티켓 신청 요청:", req.body);
-  const {
-    name,
-    email,
-    ticketType,
-    phone,
-    quantity = 1,
-    memo = null,
-  } = req.body;
+/** 공통: 이벤트 제목 조회(텔레그램 메시지에 쓰고 싶을 때) */
+async function getEventTitle(eventId: number): Promise<string | null> {
+  const [rows] = await db.query<RowDataPacket[]>("SELECT title FROM events WHERE id=?", [eventId]);
+  return rows[0]?.title ?? null;
+}
 
+// ✅ 티켓 신청 (행사 하위)
+export const applyTicket = async (req: Request, res: Response) => {
+  const eventId = Number(req.params.id); // ★ 추가
+  console.log("📥 티켓 신청 요청:", { eventId, ...req.body });
+
+  const { name, email, ticketType, phone, quantity = 1, memo = null } = req.body;
   if (!name || !email || !ticketType || !phone) {
     return res.status(400).json({ message: "필수 항목 누락" });
   }
@@ -27,15 +28,16 @@ export const applyTicket = async (req: Request, res: Response) => {
   try {
     const [result] = await db.execute<ResultSetHeader>(
       `INSERT INTO tickets
-        (name, email, ticket_type, status, phone, quantity, memo, ticket_code)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, email, ticketType, "pending", phone, quantity, memo, ticketCode]
+        (event_id, name, email, ticket_type, status, phone, quantity, memo, ticket_code)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [eventId, name, email, ticketType, "pending", phone, quantity, memo, ticketCode]
     );
 
     res.status(201).json({
       message: "신청 완료",
       ticketId: result.insertId,
       ticketCode,
+      eventId,
     });
   } catch (err) {
     console.error("❌ applyTicket 오류:", err);
@@ -43,9 +45,10 @@ export const applyTicket = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 이름 + 전화번호로 조회 (취소되지 않은 모든 티켓 반환)
+// ✅ 이름 + 전화번호 조회 (행사 한정)
 export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
   try {
+    const eventId = Number(req.params.id); // ★ 추가
     const name = decodeURIComponent(String(req.query.name));
     const phone = decodeURIComponent(String(req.query.phone));
 
@@ -55,30 +58,31 @@ export const getTicketByNameAndPhone = async (req: Request, res: Response) => {
 
     const [rows] = await db.execute<RowDataPacket[]>(
       `SELECT * FROM tickets
-       WHERE name = ? AND phone = ? AND status != 'cancelled'
+       WHERE event_id = ? AND name = ? AND phone = ? AND status != 'cancelled'
        ORDER BY created_at DESC`,
-      [name, phone]
+      [eventId, name, phone]
     );
 
     if (rows.length === 0) {
       return res.status(404).json({ message: "유효한 티켓이 없습니다." });
     }
 
-    res.status(200).json(rows); // ✅ 여러 개의 티켓 반환
+    res.status(200).json(rows);
   } catch (err) {
     console.error("❌ getTicketsByNameAndPhone 오류:", err);
     res.status(500).json({ message: "DB 오류" });
   }
 };
 
-// ✅ 입금 확인
+// ✅ 입금 확인 (행사 한정)
 export const confirmTicket = async (req: Request, res: Response) => {
+  const eventId = Number(req.params.id); // ★ 추가
   const { id } = req.params;
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'confirmed' WHERE id = ?",
-      [id]
+      "UPDATE tickets SET status = 'confirmed' WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
 
     if (result.affectedRows === 0) {
@@ -92,29 +96,33 @@ export const confirmTicket = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 송금 요청 (상태: 'requestConfirmTicket')
+// ✅ 송금 확인 요청 (행사 한정)
 export const requestConfirmTicket = async (req: Request, res: Response) => {
+  const eventId = Number(req.params.id); // ★ 추가
   const { id } = req.params;
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'requested' WHERE id = ?",
-      [id]
+      "UPDATE tickets SET status = 'requested' WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "해당 티켓 없음" });
     }
 
-    // ✅ 티켓 상세 정보 조회
     const [rows] = await db.execute<RowDataPacket[]>(
-      "SELECT * FROM tickets WHERE id = ?",
-      [id]
+      "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
     const ticket = rows[0];
+    const title = await getEventTitle(eventId);
 
-    // ✅ 텔레그램 알림 전송
-    const message = `📩 *입금 확인 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
+    const message =
+      `📩 *입금 확인 요청 도착*${title ? `\n📅 행사: ${title}` : ""}` +
+      `\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}` +
+      `\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)` +
+      `\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`;
     await sendTelegram(message);
 
     res.status(200).json({ message: "송금 요청 상태로 변경됨" });
@@ -124,8 +132,9 @@ export const requestConfirmTicket = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 환불 요청
+// ✅ 환불 요청 (행사 한정)
 export const requestRefundTicket = async (req: Request, res: Response) => {
+  const eventId = Number(req.params.id); // ★ 추가
   const { id } = req.params;
   const { refundAccount } = req.body;
 
@@ -135,23 +144,27 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'refund_requested', refund_account = ? WHERE id = ?",
-      [refundAccount, id]
+      "UPDATE tickets SET status = 'refund_requested', refund_account = ? WHERE id = ? AND event_id = ?",
+      [refundAccount, id, eventId]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "티켓 없음" });
     }
 
-    // ✅ 티켓 정보 조회
     const [rows] = await db.execute<RowDataPacket[]>(
-      "SELECT * FROM tickets WHERE id = ?",
-      [id]
+      "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
     const ticket = rows[0];
+    const title = await getEventTitle(eventId);
 
-    // ✅ 텔레그램 알림 전송
-    const message = `💸 *환불 요청 도착*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
+    const message =
+      `💸 *환불 요청 도착*${title ? `\n📅 행사: ${title}` : ""}` +
+      `\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}` +
+      `\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)` +
+      `\n🏦 환불 계좌: ${ticket.refund_account}` +
+      `\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`;
     await sendTelegram(message);
 
     return res.status(200).json({ message: "환불 요청됨" });
@@ -161,19 +174,16 @@ export const requestRefundTicket = async (req: Request, res: Response) => {
   }
 };
 
-
-
-
-// ✅ 예약 취소 요청 (상태: 'cancelled')
+// ✅ 예약 취소 (행사 한정)
 export const requestDeleteTicket = async (req: Request, res: Response) => {
+  const eventId = Number(req.params.id); // ★ 추가
   const { id } = req.params;
   const { refundAccount } = req.body;
 
   try {
-    // 현재 상태 확인
     const [rows] = await db.execute<RowDataPacket[]>(
-      "SELECT status FROM tickets WHERE id = ?",
-      [id]
+      "SELECT status FROM tickets WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
 
     if (rows.length === 0) {
@@ -182,21 +192,18 @@ export const requestDeleteTicket = async (req: Request, res: Response) => {
 
     const currentStatus = rows[0].status;
 
-    // ✅ 입금 전(pending)인 경우 환불 계좌 없이도 취소 허용
     if (currentStatus === "pending") {
       await db.execute<ResultSetHeader>(
-        "UPDATE tickets SET status = 'cancelled' WHERE id = ?",
-        [id]
+        "UPDATE tickets SET status = 'cancelled' WHERE id = ? AND event_id = ?",
+        [id, eventId]
       );
     } else {
-      // 입금 이후라면 환불 계좌가 필요함
       if (!refundAccount) {
         return res.status(400).json({ message: "환불 계좌는 필수입니다." });
       }
-
       await db.execute<ResultSetHeader>(
-        "UPDATE tickets SET status = 'cancelled', refund_account = ? WHERE id = ?",
-        [refundAccount, id]
+        "UPDATE tickets SET status = 'cancelled', refund_account = ? WHERE id = ? AND event_id = ?",
+        [refundAccount, id, eventId]
       );
     }
 
@@ -207,10 +214,11 @@ export const requestDeleteTicket = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 전체 티켓 조회 (관리자용)
+// ✅ 전체 티켓 조회(관리자) — 행사별 목록으로 바꾸는 게 안전
 export const getAllTickets = async (req: Request, res: Response) => {
   try {
-    const [rows] = await db.query("SELECT * FROM tickets ORDER BY created_at DESC");
+    const eventId = Number(req.params.id); // ★ 추가 (행사별)
+    const [rows] = await db.query("SELECT * FROM tickets WHERE event_id = ? ORDER BY created_at DESC", [eventId]);
     res.status(200).json(rows);
   } catch (error) {
     console.error("❌ 전체 티켓 조회 실패:", error);
@@ -218,29 +226,33 @@ export const getAllTickets = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 티켓 상태 조회 (개별 티켓용)
+// ✅ 관리자: 입금 확인 (행사 한정)
 export const confirmTicketByAdmin = async (req: Request, res: Response) => {
+  const eventId = Number(req.params.id); // ★ 추가
   const { id } = req.params;
 
   try {
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'confirmed' WHERE id = ?",
-      [id]
+      "UPDATE tickets SET status = 'confirmed' WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "해당 티켓을 찾을 수 없습니다." });
     }
 
-    // ✅ 티켓 정보 조회
     const [rows] = await db.execute<RowDataPacket[]>(
-      "SELECT * FROM tickets WHERE id = ?",
-      [id]
+      "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
     const ticket = rows[0];
+    const title = await getEventTitle(eventId);
 
-    // ✅ 텔레그램 알림 전송
-    const message = `🎉 *예약 최종 완료*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
+    const message =
+      `🎉 *예약 최종 완료*${title ? `\n📅 행사: ${title}` : ""}` +
+      `\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}` +
+      `\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)` +
+      `\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`;
     await sendTelegram(message);
 
     res.status(200).json({ message: "입금 확인 완료" });
@@ -250,30 +262,34 @@ export const confirmTicketByAdmin = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ 환불 완료 처리 (관리자용)
+// ✅ 관리자: 환불 완료 (행사 한정)
 export const confirmRefundByAdmin = async (req: Request, res: Response) => {
+  const eventId = Number(req.params.id); // ★ 추가
   const { id } = req.params;
 
   try {
-    // 상태 변경
     const [result] = await db.execute<ResultSetHeader>(
-      "UPDATE tickets SET status = 'cancelled' WHERE id = ? AND status = 'refund_requested'",
-      [id]
+      "UPDATE tickets SET status = 'cancelled' WHERE id = ? AND event_id = ? AND status = 'refund_requested'",
+      [id, eventId]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "환불 요청 상태의 티켓이 없습니다." });
     }
 
-    // ✅ 환불 티켓 정보 조회
     const [rows] = await db.execute<RowDataPacket[]>(
-      "SELECT * FROM tickets WHERE id = ?",
-      [id]
+      "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
+      [id, eventId]
     );
     const ticket = rows[0];
+    const title = await getEventTitle(eventId);
 
-    // ✅ 텔레그램 알림 전송
-    const message = `✅ *환불 완료 처리됨*\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)\n🏦 환불 계좌: ${ticket.refund_account}\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", {timeZone: "Asia/Seoul"})}`;
+    const message =
+      `✅ *환불 완료 처리됨*${title ? `\n📅 행사: ${title}` : ""}` +
+      `\n👤 이름: ${ticket.name}\n📞 전화번호: ${ticket.phone}` +
+      `\n🎫 티켓: ${ticket.ticket_type} (${ticket.quantity}매)` +
+      `\n🏦 환불 계좌: ${ticket.refund_account}` +
+      `\n🕐 신청 시간: ${new Date(ticket.created_at).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}`;
     await sendTelegram(message);
 
     res.status(200).json({ message: "환불 완료 처리되었습니다." });
@@ -283,42 +299,35 @@ export const confirmRefundByAdmin = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ QR 코드 생성 (티켓 코드로)
+// ✅ QR 생성/메일 발송 (행사 한정)
 export const confirmTicketWithQR = async (req: Request, res: Response) => {
-  const ticketId = Number(req.params.id);
+  const eventId = Number(req.params.id); // ★ 추가
+  const ticketId = Number(req.params.ticketId);
 
   try {
-    const [rows] = await db.query("SELECT * FROM tickets WHERE id = ?", [ticketId]);
-    const ticket = (rows as RowDataPacket[])[0];
-
+    const [rows] = await db.query<RowDataPacket[]>(
+      "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
+      [ticketId, eventId]
+    );
+    const ticket = rows[0];
     if (!ticket) return res.status(404).json({ error: "티켓 없음" });
 
-    // ✅ 이미 QR이 존재하면 이메일만 재전송하고 종료
+    // 이미 QR 있으면 이메일 재전송
     if (ticket.qr_url) {
       await sendTicketEmail(ticket.email, ticket.name, ticket.qr_url);
-      return res.status(200).json({ message: "✅ 이미 QR이 존재하여 이메일만 재전송됨" });
+      return res.status(200).json({ message: "✅ 이미 QR이 있어 이메일만 재전송됨" });
     }
 
-    // ✅ QR 생성
     const qrData = `https://obed-ticket.vercel.app/verify/${ticket.id}`;
     const qrImage = await generateQRCode(qrData);
 
-    // ✅ 상태가 아직 confirmed가 아니면 같이 변경
     if (ticket.status !== "confirmed") {
-      await db.query(
-        "UPDATE tickets SET status = 'confirmed', qr_url = ? WHERE id = ?",
-        [qrImage, ticketId]
-      );
+      await db.query("UPDATE tickets SET status='confirmed', qr_url=? WHERE id=? AND event_id=?", [qrImage, ticketId, eventId]);
     } else {
-      await db.query(
-        "UPDATE tickets SET qr_url = ? WHERE id = ?",
-        [qrImage, ticketId]
-      );
+      await db.query("UPDATE tickets SET qr_url=? WHERE id=? AND event_id=?", [qrImage, ticketId, eventId]);
     }
 
-    // ✅ 이메일 전송
     await sendTicketEmail(ticket.email, ticket.name, qrImage);
-
     res.status(200).json({ message: "✅ QR 생성 및 이메일 전송 완료" });
   } catch (err) {
     console.error("❌ QR 처리 중 오류:", err);
@@ -326,15 +335,15 @@ export const confirmTicketWithQR = async (req: Request, res: Response) => {
   }
 };
 
-
-// ✅ QR 스캔 후 입장 검증용
+// ✅ QR 스캔 검증 (행사 한정)
 export const verifyTicket = async (req: Request, res: Response) => {
-  const ticketId = Number(req.params.id);
+  const eventId = Number(req.params.id); // ★ 추가
+  const ticketId = Number(req.params.ticketId);
 
   try {
     const [rows] = await db.query<RowDataPacket[]>(
-      "SELECT * FROM tickets WHERE id = ?",
-      [ticketId]
+      "SELECT * FROM tickets WHERE id = ? AND event_id = ?",
+      [ticketId, eventId]
     );
 
     if (rows.length === 0) {

@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import ticketRoutes from './routes/ticketRoutes';
+import eventsRoutes from './routes/eventsRoutes';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -24,8 +24,8 @@ app.use(
   })
 );
 
-// ✅ 예매 관련 라우터 연결
-app.use("/api/tickets", ticketRoutes);
+// ✅ 행사 관련 라우터 연결
+app.use("/api/events", eventsRoutes);
 
 // 핑보내기
 app.get("/api/health", (req, res) => {
