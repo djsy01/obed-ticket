@@ -18,7 +18,7 @@ export default function App() {
         <Route path="/events/:eventId/find" element={<FindTicket />} />
         <Route path="/complete" element={<CompletePage />} />
         <Route path="/refund" element={<RefundPage />} />
-        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/:eventId" element={<AdminPage />} /> {/* ✅ 수정: 동적 라우팅 추가 */}
         <Route path="/verify/:eventId/:id" element={<VerifyPage />} />
       </Routes>
     </Router>
