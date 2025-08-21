@@ -1,4 +1,3 @@
-// server/src/controllers/ticketController.ts
 import { Request, Response } from "express";
 import { db } from "../db/index";
 import { ResultSetHeader, RowDataPacket } from "mysql2";
