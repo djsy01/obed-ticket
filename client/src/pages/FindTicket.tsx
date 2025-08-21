@@ -9,15 +9,17 @@ export default function FindTicket() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  const eventId = 1; // ✅ 이벤트 ID를 직접 입력
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await searchTicketByNamePhone(name, phone);
+      const res = await searchTicketByNamePhone(eventId, name, phone); // ✅ eventId 인자 추가
 
       if (res) {
-        navigate(`/complete?name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`);
+        navigate(`/complete?eventId=${eventId}&name=${encodeURIComponent(name)}&phone=${encodeURIComponent(phone)}`);
       } else {
         setError("예매 정보를 찾을 수 없습니다.");
       }

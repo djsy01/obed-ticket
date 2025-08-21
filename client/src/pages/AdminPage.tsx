@@ -3,7 +3,7 @@ import {
   getAllTickets,
   requestConfirmByAdmin,
   requestRefundConfirmByAdmin,
-  generateQRAndSendEmail, // ✅ QR 함수 추가
+  generateQRAndSendEmail,
 } from "../api/ticket";
 import "../styles/AdminPage.css";
 import { useNavigate } from "react-router-dom";
@@ -49,6 +49,8 @@ export default function AdminPage() {
   const ticketsPerPage = 10;
   const navigate = useNavigate();
 
+  const eventId = 1; // ✅ 관리자 페이지에서 관리할 이벤트 ID
+
   useEffect(() => {
     const adminKey = import.meta.env.VITE_ADMIN_SECRET;
     const storedAuth = localStorage.getItem("isAdmin");
@@ -71,7 +73,7 @@ export default function AdminPage() {
   useEffect(() => {
     if (!authorized) return;
 
-    getAllTickets()
+    getAllTickets(eventId) // ✅ eventId 인자 추가
       .then((data: Ticket[]) => {
         const sorted = data.sort((a, b) =>
           (a.name ?? "").localeCompare(b.name ?? "", "ko")
@@ -80,12 +82,12 @@ export default function AdminPage() {
       })
       .catch(() => alert("티켓 조회 실패"))
       .finally(() => setLoading(false));
-  }, [authorized]);
+  }, [authorized, eventId]);
 
   const handleConfirm = async (id: number) => {
     try {
-      await requestConfirmByAdmin(id); // 1. 입금 확인
-      await generateQRAndSendEmail(id); // 2. QR 생성 + 이메일 전송
+      await requestConfirmByAdmin(eventId, id); // ✅ eventId 인자 추가
+      await generateQRAndSendEmail(eventId, id); // ✅ eventId 인자 추가
 
       setTickets((prev) =>
         prev.map((t) => (t.id === id ? { ...t, status: "confirmed" } : t))
@@ -99,7 +101,7 @@ export default function AdminPage() {
   };
 
   const handleRefund = async (id: number) => {
-    await requestRefundConfirmByAdmin(id);
+    await requestRefundConfirmByAdmin(eventId, id); // ✅ eventId 인자 추가
     setTickets((prev) =>
       prev.map((t) => (t.id === id ? { ...t, status: "refunded" } : t))
     );

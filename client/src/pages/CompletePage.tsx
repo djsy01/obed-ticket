@@ -24,6 +24,7 @@ const formatPrice = (price: number) =>
 
 export default function CompletePage() {
   const [searchParams] = useSearchParams();
+  const eventId = Number(searchParams.get("eventId")); // ✅ eventId 가져오기
   const name = searchParams.get("name");
   const phone = searchParams.get("phone");
   const [tickets, setTickets] = useState<any[]>([]);
@@ -31,8 +32,8 @@ export default function CompletePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (name && phone) {
-      searchTicketByNamePhone(name, phone)
+    if (name && phone && eventId) { // ✅ eventId가 있을 때만 실행
+      searchTicketByNamePhone(eventId, name, phone) // ✅ eventId 인자 추가
         .then((data) => {
           setTickets(Array.isArray(data) ? data : [data]);
         })
@@ -41,11 +42,11 @@ export default function CompletePage() {
         })
         .finally(() => setLoading(false));
     }
-  }, [name, phone]);
+  }, [name, phone, eventId]);
 
   const handleConfirmClick = async (ticketId: number) => {
     try {
-      await requestConfirm(ticketId);
+      await requestConfirm(eventId, ticketId); // ✅ eventId 인자 추가
       setTickets((prev) =>
         prev.map((t) =>
           t.id === ticketId ? { ...t, status: "requested" } : t
@@ -65,7 +66,7 @@ export default function CompletePage() {
       if (!ok) return;
 
       try {
-        await requestDelete(id, "");
+        await requestDelete(eventId, id, ""); // ✅ eventId 인자 추가
         alert("예약이 취소되었습니다.");
         setTickets((prev) => prev.filter((t) => t.id !== id));
       } catch (err) {
@@ -75,6 +76,7 @@ export default function CompletePage() {
     } else if (status === "requested" || status === "confirmed") {
       navigate("/refund", {
         state: {
+          eventId, // ✅ eventId state 추가
           name,
           phone,
           ticketId: id,

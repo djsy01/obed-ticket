@@ -10,6 +10,7 @@ export default function TicketForm() {
   const [ticketType, setTicketType] = useState<"" | "student" | "adult">("");
   const [quantity, setQuantity] = useState(1);
   const [memo, setMemo] = useState("");
+  const eventId = 1; // ✅ 여기에 이벤트 ID를 직접 입력
 
   const navigate = useNavigate();
 
@@ -23,11 +24,12 @@ export default function TicketForm() {
 
     try {
       const data = { name, email, phone, ticketType, quantity, memo };
-      await applyTicket(data);
+      await applyTicket(eventId, data); // ✅ eventId 인자 추가
 
       const encodedName = encodeURIComponent(name);
       const encodedPhone = encodeURIComponent(phone);
-      navigate(`/complete?name=${encodedName}&phone=${encodedPhone}`);
+      // ✅ `complete` 페이지로 이동할 때도 eventId를 쿼리 파라미터로 전달해야 합니다.
+      navigate(`/complete?eventId=${eventId}&name=${encodedName}&phone=${encodedPhone}`);
     } catch (err) {
       alert("❌ 예매에 실패했습니다.");
       console.error(err);

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import { verifyTicket } from "../api/ticket";
+import "../styles/VerifyPage.css";
 
 type Ticket = {
   name: string;
@@ -10,15 +11,19 @@ type Ticket = {
 };
 
 export default function VerifyPage() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const eventId = 1; // ✅ 이벤트 ID를 직접 입력
 
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const res = await axios.get(`/api/tickets/verify/${id}`);
-        setTicket(res.data);
+        if (id) {
+          const res = await verifyTicket(eventId, id); // ✅ eventId 인자 추가
+          setTicket(res.name);
+        }
       } catch (err) {
         console.error("❌ verify error:", err);
         setError("❌ 유효하지 않은 티켓입니다.");
@@ -26,7 +31,7 @@ export default function VerifyPage() {
     };
 
     if (id) fetchTicket();
-  }, [id]);
+  }, [id, eventId]);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -34,7 +39,7 @@ export default function VerifyPage() {
   };
 
   return (
-    <div className="verify-container" style={{ textAlign: "center", padding: "2rem" }}>
+    <div className="verify-container">
       <h2>🎫 OBED 티켓</h2>
 
       {error ? (
