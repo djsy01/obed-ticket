@@ -13,11 +13,14 @@ export const getEvent = async (req: Request, res: Response) => {
 };
 
 export const createEvent = async (req: Request, res: Response) => {
-  const { title, date, description, location, poster_url } = req.body;
+  const { title, date, description, location } = req.body;
+  const poster_url = req.file ? `/uploads/${req.file.filename}` : null; // ✅ 파일 경로를 poster_url로 설정
+
   if (!title || !date) return res.status(400).json({ message: "title, date required" });
+
   const [r] = await db.query(
     "INSERT INTO events (title, description, date, location, poster_url) VALUES (?, ?, ?, ?, ?)",
-    [title, description ?? null, date, location ?? null, poster_url ?? null]
+    [title, description ?? null, date, location ?? null, poster_url]
   );
   res.status(201).json({ ok: true, id: (r as any).insertId });
 };

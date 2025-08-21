@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import eventsRoutes from './routes/eventsRoutes';
 import dotenv from 'dotenv';
+import path from 'path';
 
 dotenv.config();
 
@@ -23,6 +24,10 @@ app.use(
     credentials: true,
   })
 );
+
+// ✅ 포스터 이미지가 저장될 uploads 폴더를 정적 파일로 서빙
+// 서버의 루트 디렉토리에 있는 'uploads' 폴더를 가리키도록 수정
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // ✅ 행사 관련 라우터 연결
 app.use("/api/events", eventsRoutes);

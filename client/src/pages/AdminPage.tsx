@@ -21,6 +21,7 @@ export default function AdminPage() {
     location: "",
     description: "",
   });
+  const [posterFile, setPosterFile] = useState<File | null>(null); // ✅ 파일 상태 추가
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,7 +59,16 @@ export default function AdminPage() {
         alert("행사 제목과 날짜는 필수 입력 항목입니다.");
         return;
       }
-      await createEvent(newEvent);
+
+      // ✅ FormData를 사용하여 파일 및 다른 데이터 전송
+      const formData = new FormData();
+      formData.append('title', newEvent.title);
+      formData.append('date', newEvent.date);
+      if (newEvent.location) formData.append('location', newEvent.location);
+      if (newEvent.description) formData.append('description', newEvent.description);
+      if (posterFile) formData.append('poster', posterFile);
+
+      await createEvent(formData);
       alert("✅ 새 행사가 생성되었습니다!");
       setNewEvent({
         title: "",
@@ -66,6 +76,7 @@ export default function AdminPage() {
         location: "",
         description: "",
       });
+      setPosterFile(null); // ✅ 파일 상태 초기화
       listEvents().then((data) => setEvents(data));
     } catch (err) {
       console.error("❌ 행사 생성 실패:", err);
@@ -110,12 +121,17 @@ export default function AdminPage() {
             setNewEvent({ ...newEvent, location: e.target.value })
           }
         />
-        <label>설명</label>
+        <label>말씀</label>
         <textarea
           value={newEvent.description}
           onChange={(e) =>
             setNewEvent({ ...newEvent, description: e.target.value })
           }
+        />
+        <label>포스터 파일</label>
+        <input
+          type="file"
+          onChange={(e) => setPosterFile(e.target.files ? e.target.files[0] : null)}
         />
         <button onClick={handleCreateEvent}>생성</button>
       </div>
