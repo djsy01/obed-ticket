@@ -6,6 +6,7 @@ import CompletePage from "./pages/CompletePage";
 import FindTicket from "./pages/FindTicket";
 import RefundPage from "./pages/RefundPage";
 import AdminPage from "./pages/AdminPage";
+import AdminTicketsPage from "./pages/AdminTicketsPage"; // ✅ 추가: AdminTicketsPage 임포트
 import VerifyPage from "./pages/VerifyPage";
 
 export default function App() {
@@ -15,10 +16,11 @@ export default function App() {
       <Routes>
         <Route path="/" element={<EventsPage />} />
         <Route path="/events/:eventId/apply" element={<TicketForm />} />
-        <Route path="/events/:eventId/find" element={<FindTicket />} />
+        <Route path="/find" element={<FindTicket />} />
         <Route path="/complete" element={<CompletePage />} />
         <Route path="/refund" element={<RefundPage />} />
-        <Route path="/admin/:eventId" element={<AdminPage />} /> {/* ✅ 수정: 동적 라우팅 추가 */}
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/:eventId/tickets" element={<AdminTicketsPage />} />
         <Route path="/verify/:eventId/:id" element={<VerifyPage />} />
       </Routes>
     </Router>
